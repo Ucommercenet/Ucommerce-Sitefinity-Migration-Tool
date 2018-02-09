@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>uCommerce.uConnector</id>
+    <title>uCommerce uConnector</title>
+    <version>1.0.0.1</version>
+    <authors>uCommerce</authors>
+    <owners>uCommerce</owners>
+    <iconUrl>http://www.ucommerce.net/images/logo-250x250.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Sample app</description>
+    <releaseNotes>
+    </releaseNotes>
+    <copyright>
+    </copyright>
+    <tags>uCommerce uConnector</tags>
+    <dependencies>
+      <dependency id="Castle.Core" version="3.3.0" />
+      <dependency id="Castle.Windsor" version="3.3.0" />
+      <dependency id="Common.Logging" version="2.1.2" />
+      <dependency id="CsvHelper" version="1.1.0" />
+      <dependency id="EPPlus" version="2.9.0.1" />
+      <dependency id="ftplib" version="1.0.1.2" />
+      <dependency id="Iesi.Collections" version="1.0.1" />
+      <dependency id="log4net" version="1.2.10" />
+      <dependency id="Quartz" version="2.2.4" />
+      <dependency id="UConnector" version="1.1.1.13235" />
+    </dependencies>
+  </metadata>
+</package>

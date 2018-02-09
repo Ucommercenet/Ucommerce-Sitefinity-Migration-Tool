@@ -1,0 +1,11 @@
+<configuration>
+  <configSections>
+    <section name="operation" type="UConnector.Config.Configuration.OperationSection, UConnector.Framework" />
+  </configSections>
+  <operation name="test" enabled="false" type="{operation namespace}, {operation assembly}">
+    <cronSchedules>
+      <!-- Sec, min, hour, day, month, day-of-week(MON-FRI) -->
+      <cronSchedule name="every 30 minutes" cron="0 0/30 * * * ?"/>
+    </cronSchedules>
+  </operation>
+</configuration>
