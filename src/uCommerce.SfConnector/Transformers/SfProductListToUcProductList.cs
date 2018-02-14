@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using uCommerce.SfConnector.Model;
 using uCommerce.uConnector.Model;
 using UCommerce.EntitiesV2;
-using UConnector.Extensions;
 using UConnector.Framework;
 
 namespace uCommerce.SfConnector.Transformers
@@ -65,19 +61,19 @@ namespace uCommerce.SfConnector.Transformers
         }
 
         public IEnumerable<Product> Execute(IEnumerable<SitefinityProduct> @from)
-        { 
+        {
             var tempProducts = new List<Product>();
 
-            foreach (SitefinityProduct sfProduct in @from)
+            foreach (var sfProduct in @from)
             {
                 var product = new Product();
                 product.Sku = sfProduct.Sku;
                 product.VariantSku = "";
-                product.Name = sfProduct.Title;
+                product.Name = sfProduct.Title_;
                 product.DisplayOnSite = true;
                 product.ThumbnailImageMediaId = "";
                 product.PrimaryImageMediaId = "";
-                if (sfProduct.Weight != null) product.Weight = (decimal) sfProduct.Weight;
+                if (sfProduct.Weight != null) product.Weight = (decimal)sfProduct.Weight;
 
                 product.ProductDefinition = new ProductDefinition()
                 {

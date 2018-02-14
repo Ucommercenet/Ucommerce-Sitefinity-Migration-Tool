@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using NHibernate.Linq;
+using Dapper;
 using uCommerce.SfConnector.Helpers;
 using uCommerce.SfConnector.Model;
 using UConnector.Framework;
@@ -12,8 +12,10 @@ namespace uCommerce.SfConnector.Adapters.Receivers
 
         public IEnumerable<SitefinityProduct> Receive()
         {
-            var session = SqlSessionFactory.CreateSession(ConnectionString).OpenSession();
-            return session.Query<SitefinityProduct>();
+            using (var connection = SqlSessionFactory.Create(ConnectionString))
+            {
+                return connection.Query<SitefinityProduct>("select * from sf_ec_product");
+            }
         }
     }
 }

@@ -16,7 +16,7 @@ namespace uCommerce.uConnector.Adapters.Senders
 
 		public void Send(IEnumerable<Product> input)
 		{
-			_session = GetSessionProvider().GetSession();
+			_session = SessionFactory.Create(ConnectionString);
 
 			using (var tx = _session.BeginTransaction())
 			{
@@ -227,14 +227,6 @@ namespace uCommerce.uConnector.Adapters.Senders
 					currentProduct.AddProductDescription(productDescription);
 				}
 			}
-		}
-
-		private ISessionProvider GetSessionProvider()
-		{
-			return new SessionProvider(
-				new InMemoryCommerceConfigurationProvider(ConnectionString),
-				new SingleUserService("UConnector"),
-                ObjectFactory.Instance.ResolveAll<IContainsNHibernateMappingsTag>());
 		}
 
 		public string ConnectionString { get; set; }

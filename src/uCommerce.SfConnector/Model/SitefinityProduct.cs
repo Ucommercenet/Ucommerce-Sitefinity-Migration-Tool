@@ -1,14 +1,16 @@
 using System;
 
-namespace uCommerce.SfConnector.Model {
-    
-    public class SitefinityProduct {
+namespace uCommerce.SfConnector.Model
+{
+
+    public class SitefinityProduct
+    {
         public SitefinityProduct() { }
         public virtual System.Guid Id { get; set; }
         public virtual float? Weight { get; set; }
         public virtual byte Visible { get; set; }
-        public virtual string UrlName { get; set; }
-        public virtual string Title { get; set; }
+        public virtual string UrlName_ { get; set; }
+        public virtual string Title_ { get; set; }
         public virtual System.Nullable<System.Guid> TaxClassId { get; set; }
         public virtual int Status { get; set; }
         public virtual string Sku { get; set; }
@@ -22,16 +24,10 @@ namespace uCommerce.SfConnector.Model {
         public virtual byte IsUSCanadaTaxable { get; set; }
         public virtual byte IsShippable { get; set; }
         public virtual byte IsActive { get; set; }
-        public virtual string Description { get; set; }
+        public virtual string Description_ { get; set; }
         public virtual System.Nullable<System.Guid> AssociateBuyerWithRole { get; set; }
         public virtual string ApplicationName { get; set; }
         public virtual short VoaVersion { get; set; }
-        public virtual string UrlNameEs { get; set; }
-        public virtual string UrlNameEn { get; set; }
-        public virtual string TitleEs { get; set; }
-        public virtual string TitleEn { get; set; }
-        public virtual string DescriptionEs { get; set; }
-        public virtual string DescriptionEn { get; set; }
         public virtual int VoaClass { get; set; }
         public virtual string ClrType { get; set; }
         public virtual int TrackInventory { get; set; }
@@ -44,8 +40,6 @@ namespace uCommerce.SfConnector.Model {
         public virtual DateTime? ExpirationDate { get; set; }
         public virtual DateTime? DateCreated { get; set; }
         public virtual string ContentState { get; set; }
-        public virtual string ApprovalWorkflowStateEs { get; set; }
-        public virtual string ApprovalWorkflowStateEn { get; set; }
         public virtual string ApprovalWorkflowState { get; set; }
         public virtual System.Nullable<System.Guid> Id2 { get; set; }
     }

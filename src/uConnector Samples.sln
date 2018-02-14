@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2024
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{C623B0FD-59A6-4C51-8D42-89BF9D7BE2F0}"
 	ProjectSection(SolutionItems) = preProject
@@ -12,7 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uCommerce.uConnector", "UCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uConnector.Samples", "uConnector.Samples\uConnector.Samples.csproj", "{F915F5E7-73C9-4948-9304-90EAC9957B20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harness", "Harness\Harness.csproj", "{8AA47305-DDB1-4100-A27E-6803732AF527}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migration.CommandLine.Runner", "Harness\Migration.CommandLine.Runner.csproj", "{8AA47305-DDB1-4100-A27E-6803732AF527}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "uCommerce.SfConnector", "uCommerce.SfConnector\uCommerce.SfConnector.csproj", "{116A45E4-872A-4C59-A05D-402FC50795D0}"
 EndProject
