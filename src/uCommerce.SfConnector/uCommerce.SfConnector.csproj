@@ -74,8 +74,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Adapters\Receivers\ProductListFromSitefinity.cs" />
-    <Compile Include="Adapters\Receivers\ProductTypesFromSitefinity.cs" />
+    <Compile Include="Receivers\ProductListFromSitefinity.cs" />
+    <Compile Include="Receivers\ProductTypesFromSitefinity.cs" />
+    <Compile Include="Helpers\CreateTypesToProductsMigrationData.cs" />
     <Compile Include="Helpers\SessionFactory.cs" />
     <Compile Include="Model\SitefinityProductType.cs" />
     <Compile Include="Model\SitefinityProduct.cs" />
@@ -90,6 +91,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Adapters\" />
     <Folder Include="Mappings\" />
   </ItemGroup>
   <ItemGroup>

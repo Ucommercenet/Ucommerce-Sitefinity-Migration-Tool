@@ -14,7 +14,9 @@ namespace uCommerce.SfConnector.Adapters.Receivers
         {
             using (var connection = SqlSessionFactory.Create(ConnectionString))
             {
-                return connection.Query<SitefinityProduct>("select * from sf_ec_product");
+                return connection.Query<SitefinityProduct>("select * from sf_ec_product prod inner join " +
+                                                           "migration_types_to_products prodtypes ON " +
+                                                           "prod.id = prodtypes.productid");
             }
         }
     }

@@ -77,7 +77,7 @@ namespace uCommerce.SfConnector.Transformers
 
                 product.ProductDefinition = new ProductDefinition()
                 {
-                    Name = "Software"
+                    Name = sfProduct.TypeName
                 };
 
                 product.AllowOrdering = true;

@@ -28,3 +28,4 @@ C:\Bitbucket\UCommerce-SiteFinity-Migration\ucommerce-sitefinity-migration-tool\
 C:\Bitbucket\UCommerce-SiteFinity-Migration\ucommerce-sitefinity-migration-tool\src\UCommerce.UConnector\bin\Debug\log4net.xml
 C:\Bitbucket\UCommerce-SiteFinity-Migration\ucommerce-sitefinity-migration-tool\src\UCommerce.UConnector\obj\Debug\uCommerce.uConnector.dll
 C:\Bitbucket\UCommerce-SiteFinity-Migration\ucommerce-sitefinity-migration-tool\src\UCommerce.UConnector\obj\Debug\uCommerce.uConnector.pdb
+C:\Bitbucket\UCommerce-SiteFinity-Migration\ucommerce-sitefinity-migration-tool\src\UCommerce.UConnector\obj\Debug\uCommerce.uConnector.csprojResolveAssemblyReference.cache

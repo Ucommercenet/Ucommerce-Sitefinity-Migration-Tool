@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Configuration;
 using uCommerce.SfConnector.Adapters.Receivers;
+using uCommerce.SfConnector.Helpers;
 using uCommerce.SfConnector.Transformers;
 using uCommerce.uConnector.Adapters.Senders;
 
@@ -18,17 +19,24 @@ namespace Harness
         {
             //TODO: Create migration log file
             //TODO: Exception handling
-
             Console.WriteLine("====Data Migration CommandLine Runner====");
 
             SitefinityConnectionString = ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString;
             UCommerceConnectionString = ConfigurationManager.ConnectionStrings["UCommerceConnectionString"].ConnectionString;
 
+            CreateMigrationHelperData();
+
             MigrateProductTypes();
             MigrateProductData();
 
-            Console.WriteLine("====Data Migration Complete====");
+            Console.WriteLine("=========Data Migration Complete=========");
             Console.Read();
+        }
+
+        private static void CreateMigrationHelperData()
+        {
+            Console.WriteLine("... Creating migration helper entites and data");
+            CreateTypesToProductsMigrationData.PopulateData(SitefinityConnectionString);
         }
 
         private static void MigrateProductData()

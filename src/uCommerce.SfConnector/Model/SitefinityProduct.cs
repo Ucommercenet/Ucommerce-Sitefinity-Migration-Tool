@@ -42,5 +42,6 @@ namespace uCommerce.SfConnector.Model
         public virtual string ContentState { get; set; }
         public virtual string ApprovalWorkflowState { get; set; }
         public virtual System.Nullable<System.Guid> Id2 { get; set; }
+        public virtual string TypeName { get; set; }
     }
 }
