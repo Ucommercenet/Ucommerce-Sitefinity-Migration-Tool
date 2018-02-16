@@ -76,7 +76,6 @@
   <ItemGroup>
     <Compile Include="Receivers\ProductListFromSitefinity.cs" />
     <Compile Include="Receivers\ProductTypesFromSitefinity.cs" />
-    <Compile Include="Helpers\CreateTypesToProductsMigrationData.cs" />
     <Compile Include="Helpers\SessionFactory.cs" />
     <Compile Include="Model\SitefinityProductType.cs" />
     <Compile Include="Model\SitefinityProduct.cs" />

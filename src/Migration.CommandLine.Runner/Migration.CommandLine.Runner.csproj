@@ -64,11 +64,17 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\UCommerce.UConnector\bin\Debug\UCommerce.dll</HintPath>
     </Reference>
+    <Reference Include="UConnector">
+      <HintPath>..\..\lib\uConnector\UConnector.dll</HintPath>
+    </Reference>
     <Reference Include="UConnector.Framework">
       <HintPath>..\..\lib\uConnector\UConnector.Framework.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\IMigrationOperation.cs" />
+    <Compile Include="Operations\MigrateProductData.cs" />
+    <Compile Include="Operations\MigrateProductTypes.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -77,6 +83,12 @@
       <SubType>Designer</SubType>
     </None>
     <None Include="Components.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Tasks\MigrateProductData.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Tasks\MigrateProductTypes.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -89,6 +101,10 @@
       <Project>{3af0be5a-98c2-40ea-bec8-62c50501b810}</Project>
       <Name>uCommerce.uConnector</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="PrerequisiteDBScripts\MSSQL\CreateTypesToProductsMigrationData.sql" />
+    <Content Include="PrerequisiteDBScripts\MSSQL\readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
