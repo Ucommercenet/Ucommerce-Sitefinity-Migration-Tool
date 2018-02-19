@@ -18,7 +18,6 @@ namespace MigrationCommandLineRunner.Operations
             return FluentOperationBuilder
                 .Receive<ProductTypesFromSitefinity>()
                 .WithOption(x => x.ConnectionString = sitefinityConnectionString)
-                .Batch()
                 .Transform<SfProductTypesToUcProductDefinitions>()
                 .Send<ProductDefinitionsToUCommerce>()
                 .WithOption(x => x.ConnectionString = uCommerceConnectionString)
