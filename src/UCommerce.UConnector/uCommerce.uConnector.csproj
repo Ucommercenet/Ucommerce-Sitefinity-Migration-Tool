@@ -57,17 +57,17 @@
       <HintPath>..\packages\ftplib.1.0.1.2\lib\net35\ftplib.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Iesi.Collections, Version=1.0.1.0, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Iesi.Collections.1.0.1\lib\Iesi.Collections.dll</HintPath>
+    <Reference Include="Iesi.Collections, Version=4.0.0.0, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
+      <HintPath>..\packages\Iesi.Collections.4.0.0.4000\lib\net40\Iesi.Collections.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
       <HintPath>..\packages\log4net.1.2.10\lib\2.0\log4net.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="NHibernate, Version=3.3.1.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\uCommerce\NHibernate.dll</HintPath>
+    <Reference Include="NHibernate, Version=4.0.0.4000, Culture=neutral, PublicKeyToken=aa95f207798dfdb4, processorArchitecture=MSIL">
+      <HintPath>..\packages\NHibernate.4.0.2.4000\lib\net40\NHibernate.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -86,13 +86,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\uCommerce\UCommerce.Infrastructure.dll</HintPath>
     </Reference>
-    <Reference Include="UConnector, Version=2.0.0.16111, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\uConnector.2.0.0.16111\Lib\net400\UConnector.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="UConnector.Framework, Version=2.0.0.16111, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\uConnector.2.0.0.16111\Lib\net400\UConnector.Framework.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="UConnector.Framework">
+      <HintPath>..\..\lib\uConnector\UConnector.Framework.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -119,7 +114,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>Powershell.exe -ExecutionPolicy Bypass -file "$(ProjectDir)..\..\tools\Deploy\Generate.uConnector.App.Package.ps1" -RebuildSolution False -TargetDirectory "$(ProjectDir)..\..\package" -SourceDirectory "$(ProjectDir)</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>
