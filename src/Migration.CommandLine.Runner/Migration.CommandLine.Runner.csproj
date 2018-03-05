@@ -92,8 +92,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers\IMigrationOperation.cs" />
+    <Compile Include="Operations\MigrateCatalogs.cs" />
     <Compile Include="Operations\MigrateProductData.cs" />
     <Compile Include="Operations\MigrateProductTypes.cs" />
+    <Compile Include="Operations\MigrateTaxonomy.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

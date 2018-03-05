@@ -77,12 +77,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\SitefinityTaxonomy.cs" />
+    <Compile Include="Model\SitefinityCatalog.cs" />
+    <Compile Include="Receivers\CatalogsFromSitefinity.cs" />
+    <Compile Include="Receivers\TaxonomyFromSitefinity.cs" />
     <Compile Include="Receivers\ProductListFromSitefinity.cs" />
     <Compile Include="Receivers\ProductTypesFromSitefinity.cs" />
     <Compile Include="Helpers\SessionFactory.cs" />
     <Compile Include="Model\SitefinityProductType.cs" />
     <Compile Include="Model\SitefinityProduct.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Transformers\SfCatalogsToUcCatalogs.cs" />
+    <Compile Include="Transformers\SfTaxonomyToUcTaxonomy.cs" />
     <Compile Include="Transformers\SfProductListToUcProductList.cs" />
     <Compile Include="Transformers\SfProductTypesToUcProductDefinitions.cs" />
   </ItemGroup>

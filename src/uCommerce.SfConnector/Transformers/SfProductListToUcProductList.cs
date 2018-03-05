@@ -99,19 +99,19 @@ namespace uCommerce.SfConnector.Transformers
                 //    product.PriceGroupPrices.Add(priceGroupPrice);
                 //}
 
-                //foreach (var cultureCode in descriptionCultureCodes)
+                //foreach (var cultureCode in descriptionCultureCodes)   // TODO Culture Codes
                 //{
-                //    var displayName = row[UCommerceProduct.Description.DisplayName(cultureCode)];
-                //    var shortDescription = row[UCommerceProduct.Description.Short(cultureCode)];
-                //    var longDescription = row[UCommerceProduct.Description.Long(cultureCode)];
+                    var displayName = sfProduct.Title_;
+                    var shortDescription = sfProduct.Description_;
+                    var longDescription = sfProduct.Description_;
 
-                //    var desc = new ProductDescription();
-                //    desc.CultureCode = cultureCode;
-                //    desc.DisplayName = displayName.ToString();
-                //    desc.ShortDescription = shortDescription.ToString();
-                //    desc.LongDescription = longDescription.ToString();
+                    var desc = new ProductDescription();
+                    desc.CultureCode = "en-US";   // TODO
+                    desc.DisplayName = displayName;
+                    desc.ShortDescription = shortDescription;
+                    desc.LongDescription = longDescription;
 
-                //    product.ProductDescriptions.Add(desc);
+                    product.ProductDescriptions.Add(desc);
                 //}
 
                 //foreach (var column in fieldColumns)

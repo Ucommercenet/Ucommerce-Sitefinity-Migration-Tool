@@ -92,8 +92,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Adapters\Receivers\ProductListFromUCommerce.cs" />
+    <Compile Include="Adapters\Senders\ProductCatalogsToUCommerce.cs" />
     <Compile Include="Adapters\Senders\ProductDefinitionsToUCommerce.cs" />
     <Compile Include="Adapters\Senders\ProductListToUCommerce.cs" />
+    <Compile Include="Adapters\Senders\TaxonomyToUCommerce.cs" />
     <Compile Include="Helpers\ConnectionStringHelper.asax.cs" />
     <Compile Include="Helpers\InMemoryCommerceConfigurationProvider.cs" />
     <Compile Include="Helpers\SessionFactory.cs" />
