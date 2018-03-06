@@ -1,7 +1,6 @@
-﻿using System;
-using System.Configuration;
+﻿using System.Configuration;
+using MigrationCommandLineRunner.Configuration;
 using MigrationCommandLineRunner.Helpers;
-using uCommerce.SfConnector.Adapters.Receivers;
 using uCommerce.SfConnector.Receivers;
 using uCommerce.SfConnector.Transformers;
 using uCommerce.uConnector.Adapters.Senders;
@@ -21,6 +20,8 @@ namespace MigrationCommandLineRunner.Operations
                 .Receive<TaxonomyFromSitefinity>()
                 .WithOption(x => x.ConnectionString = sitefinityConnectionString)
                 .Transform<SfTaxonomyToUcTaxonomy>()
+                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultCatalogName)
+                    .WithOption(x => x.DefaultCategoryDefinitionName = MigrationSettings.Settings.DefaultCategoryDefinitionName)
                 .Send<TaxonomyToUCommerce>()
                 .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                 .ToOperation();

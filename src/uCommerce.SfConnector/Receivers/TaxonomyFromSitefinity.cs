@@ -14,7 +14,7 @@ namespace uCommerce.SfConnector.Receivers
     {
         public string ConnectionString { private get; set; }
 
-        private const string DepartmentTaxonomyId = "D7831091-E7B1-41B8-9E75-DFF32D6A7837";
+        private const string DepartmentTaxonomyId = "D7831091-E7B1-41B8-9E75-DFF32D6A7837"; // TODO move to config
 
         public IEnumerable<SitefinityTaxonomy> Receive()
         {

@@ -9,7 +9,7 @@ namespace uCommerce.SfConnector.Model {
         public virtual System.Nullable<System.Guid> TaxonomyId { get; set; }
         public virtual byte ShowInNavigation { get; set; }
         public virtual byte RenderAsLink { get; set; }
-        public virtual System.Nullable<System.Guid> ParentId { get; set; }
+        public virtual System.Nullable<System.Guid> Parent_Id { get; set; }
         public virtual float Ordinal { get; set; }
         public virtual string Nme { get; set; }
         public virtual DateTime? LastModified { get; set; }

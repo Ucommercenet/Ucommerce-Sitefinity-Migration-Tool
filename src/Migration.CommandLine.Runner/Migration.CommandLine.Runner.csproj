@@ -92,6 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers\IMigrationOperation.cs" />
+    <Compile Include="Configuration\MigrationSettings.cs" />
     <Compile Include="Operations\MigrateCatalogs.cs" />
     <Compile Include="Operations\MigrateProductData.cs" />
     <Compile Include="Operations\MigrateProductTypes.cs" />
@@ -131,5 +132,6 @@
     <Content Include="PrerequisiteDBScripts\MSSQL\CreateTypesToProductsMigrationData.sql" />
     <Content Include="PrerequisiteDBScripts\MSSQL\readme.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

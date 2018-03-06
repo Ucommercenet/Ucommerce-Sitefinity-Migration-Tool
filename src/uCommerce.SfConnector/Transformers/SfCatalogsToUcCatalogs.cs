@@ -7,6 +7,8 @@ namespace uCommerce.SfConnector.Transformers
 {
     public class SfCatalogsToUcCatalogs : ITransformer<IEnumerable<SitefinityCatalog>, IEnumerable<ProductCatalog>>
     {
+        public string DefaultCatalogName { private get; set; }
+
         public IEnumerable<ProductCatalog> Execute(IEnumerable<SitefinityCatalog> @from)
         {
             var ucommerceCatalogs = new List<ProductCatalog>();
@@ -23,7 +25,7 @@ namespace uCommerce.SfConnector.Transformers
         {
             var uCommerceCatalog = new ProductCatalog
             {
-                Name = sfCatalog.CatalogName,
+                Name = DefaultCatalogName,
                 PriceGroup = new PriceGroup()  // TODO
                 {
                     Name = "US"

@@ -24,18 +24,20 @@ namespace uCommerce.uConnector.Adapters.Senders
                         .SingleOrDefault(a => a.Name == productCatalog.Name);
                     if (productCatalogDef != null) continue;
 
-                    productCatalogDef = new ProductCatalog();
+                    productCatalogDef = new ProductCatalog
+                    {
+                        Name = productCatalog.Name,
+                        PriceGroup = _session.Query<PriceGroup>()
+                            .SingleOrDefault(a => a.Name == productCatalog.PriceGroup.Name),
+                        ProductCatalogGroup = _session.Query<ProductCatalogGroup>()
+                            .SingleOrDefault(a => a.Name == productCatalog.ProductCatalogGroup.Name),
+                        ShowPricesIncludingVAT = productCatalog.ShowPricesIncludingVAT,
+                        DisplayOnWebSite = productCatalog.DisplayOnWebSite,
+                        LimitedAccess = productCatalog.LimitedAccess,
+                        Deleted = productCatalog.Deleted,
+                        SortOrder = productCatalog.SortOrder
+                    };
 
-                    productCatalogDef.Name = productCatalog.Name;
-                    productCatalogDef.PriceGroup = _session.Query<PriceGroup>()
-                        .SingleOrDefault(a => a.Name == productCatalog.PriceGroup.Name);
-                    productCatalogDef.ProductCatalogGroup = _session.Query<ProductCatalogGroup>()
-                        .SingleOrDefault(a => a.Name == productCatalog.ProductCatalogGroup.Name);
-                    productCatalogDef.ShowPricesIncludingVAT = productCatalog.ShowPricesIncludingVAT;
-                    productCatalogDef.DisplayOnWebSite = productCatalog.DisplayOnWebSite;
-                    productCatalogDef.LimitedAccess = productCatalog.LimitedAccess;
-                    productCatalogDef.Deleted = productCatalog.Deleted;
-                    productCatalogDef.SortOrder = productCatalog.SortOrder;
 
                     _session.SaveOrUpdate(productCatalogDef);
                 }

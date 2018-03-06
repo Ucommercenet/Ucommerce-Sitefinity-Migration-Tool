@@ -1,7 +1,6 @@
-﻿using System;
-using System.Configuration;
+﻿using System.Configuration;
+using MigrationCommandLineRunner.Configuration;
 using MigrationCommandLineRunner.Helpers;
-using uCommerce.SfConnector.Adapters.Receivers;
 using uCommerce.SfConnector.Receivers;
 using uCommerce.SfConnector.Transformers;
 using uCommerce.uConnector.Adapters.Senders;
@@ -19,8 +18,9 @@ namespace MigrationCommandLineRunner.Operations
 
             return FluentOperationBuilder
                 .Receive<CatalogsFromSitefinity>()
-                .WithOption(x => x.ConnectionString = sitefinityConnectionString)
+                    .WithOption(x => x.ConnectionString = sitefinityConnectionString)
                 .Transform<SfCatalogsToUcCatalogs>()
+                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultCatalogName)
                 .Send<ProductCatalogsToUCommerce>()
                 .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                 .ToOperation();
