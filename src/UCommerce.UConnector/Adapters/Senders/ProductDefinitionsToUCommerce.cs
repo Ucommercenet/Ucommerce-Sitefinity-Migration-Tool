@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NHibernate;
 using NHibernate.Linq;
@@ -34,6 +35,8 @@ namespace uCommerce.uConnector.Adapters.Senders
                         {
                             Name = tempProductDef.Name
                         };
+
+                        Console.WriteLine($"......adding {tempProductDef.Name} product definition");
                         _session.SaveOrUpdate(productDef);
                     }
                 }

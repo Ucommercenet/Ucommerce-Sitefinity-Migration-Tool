@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NHibernate;
 using NHibernate.Linq;
@@ -38,7 +39,7 @@ namespace uCommerce.uConnector.Adapters.Senders
                         SortOrder = productCatalog.SortOrder
                     };
 
-
+                    Console.WriteLine($"......adding {productCatalog.Name} catalog");
                     _session.SaveOrUpdate(productCatalogDef);
                 }
 

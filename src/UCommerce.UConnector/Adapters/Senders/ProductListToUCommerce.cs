@@ -5,7 +5,6 @@ using NHibernate;
 using NHibernate.Linq;
 using UCommerce.EntitiesV2;
 using uCommerce.uConnector.Helpers;
-using UCommerce.Infrastructure;
 using UConnector.Framework;
 
 namespace uCommerce.uConnector.Adapters.Senders
@@ -36,7 +35,8 @@ namespace uCommerce.uConnector.Adapters.Senders
 						_session.SaveOrUpdate(product);
 					}
 
-					UpdateProduct(product, tempProduct, _session); // Update relations, categories, etc.
+				    Console.WriteLine($"......adding {tempProduct.Name} product");
+                    UpdateProduct(product, tempProduct, _session); // Update relations, categories, etc.
 				}
 				tx.Commit();
 			}

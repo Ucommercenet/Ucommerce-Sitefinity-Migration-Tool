@@ -1,11 +1,16 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace uCommerce.SfConnector.Model
 {
 
     public class SitefinityProduct
     {
-        public SitefinityProduct() { }
+        public SitefinityProduct()
+        {
+        }
+
         public virtual System.Guid Id { get; set; }
         public virtual float? Weight { get; set; }
         public virtual byte Visible { get; set; }
@@ -43,5 +48,7 @@ namespace uCommerce.SfConnector.Model
         public virtual string ApprovalWorkflowState { get; set; }
         public virtual System.Nullable<System.Guid> Id2 { get; set; }
         public virtual string TypeName { get; set; }
+        public virtual IEnumerable<string> Categories { get; set; }
+
     }
 }

@@ -33,7 +33,7 @@ namespace uCommerce.SfConnector.Adapters.Receivers
                                    languageSpecificFields +
                                    ", typename from sf_ec_product prod inner join " +
                                    "migration_types_to_products prodtypes ON " +
-                                   "prod.id = prodtypes.productid";
+                                   "prod.id = prodtypes.productid where status > 0";
 
                 return connection.Query<SitefinityProduct>(productQuery);
             }

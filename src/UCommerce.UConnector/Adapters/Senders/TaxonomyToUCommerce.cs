@@ -29,7 +29,7 @@ namespace uCommerce.uConnector.Adapters.Senders
                     if (existingCategory.Any()) continue;
 
                     var newCategory = PopulateCategory(tempCategory);
-                    Console.WriteLine($"......saving category{newCategory.Name}");
+                    Console.WriteLine($"......adding {newCategory.Name} category");
                     _session.SaveOrUpdate(newCategory);
                 }
 
@@ -67,7 +67,7 @@ namespace uCommerce.uConnector.Adapters.Senders
                 if (parentCategory == null || childCategory == null) continue;
 
                 parentCategory.AddCategory(childCategory);
-                Console.WriteLine($"......adding child category {childCategory.Name} to parent {parentCategory.Name}");
+                Console.WriteLine($"......adding {childCategory.Name} child category to {parentCategory.Name}");
                 _session.SaveOrUpdate(parentCategory);
 
                 AddCategoryChildren(childCategory);

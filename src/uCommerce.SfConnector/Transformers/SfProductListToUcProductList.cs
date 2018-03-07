@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.Linq;
+using Dapper;
+using uCommerce.SfConnector.Helpers;
 using uCommerce.SfConnector.Model;
 using uCommerce.uConnector.Model;
 using UCommerce.EntitiesV2;
@@ -28,40 +31,9 @@ namespace uCommerce.SfConnector.Transformers
             DoubleFormat = UCommerceProduct.DOUBLE_FORMAT;
         }
 
-        private void AddProductProperty(Product product, string name, string value)
-        {
-            var field = new ProductDefinitionField();
-            field.Name = name;
-            field.Multilingual = false;
-
-            var productProperty = new ProductProperty();
-            productProperty.Value = value;
-            productProperty.ProductDefinitionField = field;
-            product.ProductProperties.Add(productProperty);
-        }
-
-        private void AddProductDescriptionProperty(Product product, string name, string value, string cultureCode)
-        {
-            var field = new ProductDefinitionField();
-            field.Name = name;
-            field.Multilingual = true;
-
-            var productDescription = product.ProductDescriptions.SingleOrDefault(x => x.CultureCode == cultureCode);
-            if (productDescription == null)
-                throw new NullReferenceException(
-                    "productDescription should not be null since its parsed before 'ProductDescriptionProperties'");
-
-            var productProperty = new ProductDescriptionProperty
-            {
-                Value = value,
-                ProductDefinitionField = field
-            };
-
-            productDescription.ProductDescriptionProperties.Add(productProperty);
-        }
-
         public IEnumerable<Product> Execute(IEnumerable<SitefinityProduct> @from)
         {
+            var connection = SqlSessionFactory.Create(ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString);
             var tempProducts = new List<Product>();
 
             foreach (var sfProduct in @from)
@@ -73,7 +45,7 @@ namespace uCommerce.SfConnector.Transformers
                 product.DisplayOnSite = true;
                 product.ThumbnailImageMediaId = "";
                 product.PrimaryImageMediaId = "";
-                if (sfProduct.Weight != null) product.Weight = (decimal)sfProduct.Weight;
+                if (sfProduct.Weight != null) product.Weight = (decimal) sfProduct.Weight;
 
                 product.ProductDefinition = new ProductDefinition()
                 {
@@ -82,6 +54,21 @@ namespace uCommerce.SfConnector.Transformers
 
                 product.AllowOrdering = true;
                 product.Rating = null;
+
+                var categoryAssociations = connection.Query<string>(
+                    "select taxa.title_ from sf_ec_product prod " +
+                    "join sf_ec_product_department dept on prod.id = dept.id " +
+                    "join sf_taxa taxa on dept.val = taxa.id " +
+                    $"where prod.id = '{sfProduct.Id}'");
+
+                foreach (var categoryAssociation in categoryAssociations)
+                {
+                    product.AddCategory(new Category
+                    {
+                        Name = categoryAssociation, 
+                        SortOrder = 0
+                    }, 0);
+                }
 
                 //foreach (var column in priceColumns)
                 //{
@@ -101,17 +88,17 @@ namespace uCommerce.SfConnector.Transformers
 
                 //foreach (var cultureCode in descriptionCultureCodes)   // TODO Culture Codes
                 //{
-                    var displayName = sfProduct.Title_;
-                    var shortDescription = sfProduct.Description_;
-                    var longDescription = sfProduct.Description_;
+                var displayName = sfProduct.Title_;
+                var shortDescription = sfProduct.Description_;
+                var longDescription = sfProduct.Description_;
 
-                    var desc = new ProductDescription();
-                    desc.CultureCode = "en-US";   // TODO
-                    desc.DisplayName = displayName;
-                    desc.ShortDescription = shortDescription;
-                    desc.LongDescription = longDescription;
+                var desc = new ProductDescription();
+                desc.CultureCode = "en-US"; // TODO
+                desc.DisplayName = displayName;
+                desc.ShortDescription = shortDescription;
+                desc.LongDescription = longDescription;
 
-                    product.ProductDescriptions.Add(desc);
+                product.ProductDescriptions.Add(desc);
                 //}
 
                 //foreach (var column in fieldColumns)
@@ -203,14 +190,51 @@ namespace uCommerce.SfConnector.Transformers
             tempProducts.Where(x => string.IsNullOrWhiteSpace(x.VariantSku)).ToList().ForEach(finalList.Add);
             foreach (var product in tempProducts.Where(a => !string.IsNullOrWhiteSpace(a.VariantSku)))
             {
-                var parentProduct = tempProducts.SingleOrDefault(x => x.Sku == product.Sku && string.IsNullOrWhiteSpace(x.VariantSku));
+                var parentProduct =
+                    tempProducts.SingleOrDefault(x => x.Sku == product.Sku && string.IsNullOrWhiteSpace(x.VariantSku));
                 if (parentProduct == null)
-                    throw new Exception(string.Format("Could not find matching parent Sku '{0}' for VariantSku: '{1}'", product.Sku, product.VariantSku));
+                    throw new Exception(string.Format("Could not find matching parent Sku '{0}' for VariantSku: '{1}'",
+                        product.Sku, product.VariantSku));
 
                 parentProduct.Variants.Add(product);
             }
 
+            connection.Close();
+            connection.Dispose();
+
             return finalList;
+        }
+
+        private void AddProductProperty(Product product, string name, string value)
+        {
+            var field = new ProductDefinitionField();
+            field.Name = name;
+            field.Multilingual = false;
+
+            var productProperty = new ProductProperty();
+            productProperty.Value = value;
+            productProperty.ProductDefinitionField = field;
+            product.ProductProperties.Add(productProperty);
+        }
+
+        private void AddProductDescriptionProperty(Product product, string name, string value, string cultureCode)
+        {
+            var field = new ProductDefinitionField();
+            field.Name = name;
+            field.Multilingual = true;
+
+            var productDescription = product.ProductDescriptions.SingleOrDefault(x => x.CultureCode == cultureCode);
+            if (productDescription == null)
+                throw new NullReferenceException(
+                    "productDescription should not be null since its parsed before 'ProductDescriptionProperties'");
+
+            var productProperty = new ProductDescriptionProperty
+            {
+                Value = value,
+                ProductDefinitionField = field
+            };
+
+            productDescription.ProductDescriptionProperties.Add(productProperty);
         }
     }
 }
