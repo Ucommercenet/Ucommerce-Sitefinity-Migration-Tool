@@ -70,7 +70,7 @@ namespace uCommerce.uConnector.Adapters.Senders
                 Console.WriteLine($"......adding {childCategory.Name} child category to {parentCategory.Name}");
                 _session.SaveOrUpdate(parentCategory);
 
-                AddCategoryChildren(childCategory);
+                //AddCategoryChildren(childCategory);
             }
         }
 

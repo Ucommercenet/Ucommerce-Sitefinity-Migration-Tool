@@ -69,8 +69,6 @@ namespace uCommerce.SfConnector.Transformers
                 {
                     destCategory.AddCategory(destChildCategory);
                 }
-
-                BuildCategoryRelationship(destCategories, sourceCategories, sourceChildCategory);
             }
         }
     }
