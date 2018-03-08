@@ -32,10 +32,10 @@ namespace uCommerce.uConnector.Adapters.Senders
 							ProductDefinition =
 								_session.Query<ProductDefinition>().FirstOrDefault(x => x.Name == tempProduct.ProductDefinition.Name)
 						};
+					    Console.WriteLine($"......adding {AbridgedName(tempProduct.Name)} product");
 						_session.SaveOrUpdate(product);
 					}
 
-				    Console.WriteLine($"......adding {tempProduct.Name} product");
                     UpdateProduct(product, tempProduct, _session); // Update relations, categories, etc.
 				}
 				tx.Commit();
@@ -157,7 +157,8 @@ namespace uCommerce.uConnector.Adapters.Senders
 
 					category.CategoryProductRelations.Add(categoryRelation);
 
-					_session.Save(categoryRelation);
+				    Console.WriteLine($".........associating {AbridgedName(currentProduct.Name)} product to category {category.Name}");
+                    _session.Save(categoryRelation);
 				}
 			}
 		}
@@ -228,6 +229,16 @@ namespace uCommerce.uConnector.Adapters.Senders
 				}
 			}
 		}
+
+	    private string AbridgedName(string name)
+	    {
+ 	        if (name.Length > 25)
+	        {
+	            return name.Substring(0, 25) + "...";
+	        }
+
+	        return name;
+	    }
 
 		public string ConnectionString { get; set; }
 	}

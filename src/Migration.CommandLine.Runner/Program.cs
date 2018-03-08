@@ -19,18 +19,22 @@ namespace MigrationCommandLineRunner
             Console.WriteLine("... Migrating catalogs");
             var operation = new MigrateCatalogs().BuildOperation();
             operationEngine.Execute(operation);
+            Console.WriteLine();
 
             Console.WriteLine("... Migrating taxonomy");
             operation = new MigrateTaxonomy().BuildOperation();
             operationEngine.Execute(operation);
+            Console.WriteLine();
 
             Console.WriteLine("... Migrating product types");
             operation = new MigrateProductTypes().BuildOperation();
             operationEngine.Execute(operation);
+            Console.WriteLine();
 
             Console.WriteLine("... Migrating core product data");
             operationEngine.Execute(new MigrateProductData().BuildOperation());
 
+            Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("=========Data Migration Complete=========");
             Console.Read();

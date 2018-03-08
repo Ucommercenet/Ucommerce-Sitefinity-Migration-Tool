@@ -35,7 +35,7 @@ while @type_id is not null
 begin
 	-- for each type table, use a dynamic query to fetch any existing product 
 	-- associations and append them to the new migration table
-    select @typeName = title, @clrType = clr_type from sf_ec_product_type where id = @type_id;
+    select @typeName = title_, @clrType = clr_type from sf_ec_product_type where id = @type_id;
     select @typeTableName = substring(@clrType, 39, len(@clrType))
     set @sql = 'insert into migration_types_to_products (typename, productid) select ''' + @typeName + ''', id from ' + @typeTableName
     exec(@sql);

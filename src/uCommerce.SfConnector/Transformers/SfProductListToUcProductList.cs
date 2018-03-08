@@ -60,12 +60,13 @@ namespace uCommerce.SfConnector.Transformers
                     "join sf_ec_product_department dept on prod.id = dept.id " +
                     "join sf_taxa taxa on dept.val = taxa.id " +
                     $"where prod.id = '{sfProduct.Id}'");
+                // TODO: category names are not guaranteed to be unique
 
                 foreach (var categoryAssociation in categoryAssociations)
                 {
                     product.AddCategory(new Category
                     {
-                        Name = categoryAssociation, 
+                        Name = categoryAssociation,
                         SortOrder = 0
                     }, 0);
                 }
