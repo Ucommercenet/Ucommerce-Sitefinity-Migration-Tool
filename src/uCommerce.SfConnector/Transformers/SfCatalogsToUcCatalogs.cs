@@ -26,11 +26,18 @@ namespace uCommerce.SfConnector.Transformers
             var uCommerceCatalog = new ProductCatalog
             {
                 Name = DefaultCatalogName,
-                PriceGroup = new PriceGroup()  // TODO
+                PriceGroup = new PriceGroup() // TODO
                 {
-                    Name = "US"
+                    Name = "JP",
+                    Deleted = false,
+                    Currency = new Currency()
+                    {
+                        ISOCode = "YEN",
+                        ExchangeRate = 100,
+                        Deleted = false
+                    }
                 },
-                ProductCatalogGroup = new ProductCatalogGroup()  // TODO
+                ProductCatalogGroup = new ProductCatalogGroup() // TODO
                 {
                     Name = "uCommerce.dk"
                 },

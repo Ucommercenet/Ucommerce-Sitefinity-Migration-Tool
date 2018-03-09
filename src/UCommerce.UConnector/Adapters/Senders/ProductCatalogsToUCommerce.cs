@@ -28,8 +28,8 @@ namespace uCommerce.uConnector.Adapters.Senders
                     productCatalogDef = new ProductCatalog
                     {
                         Name = productCatalog.Name,
-                        PriceGroup = _session.Query<PriceGroup>()
-                            .SingleOrDefault(a => a.Name == productCatalog.PriceGroup.Name),
+                       // PriceGroup = _session.Query<PriceGroup>()
+                       //     .SingleOrDefault(a => a.Name == productCatalog.PriceGroup.Name),
                         ProductCatalogGroup = _session.Query<ProductCatalogGroup>()
                             .SingleOrDefault(a => a.Name == productCatalog.ProductCatalogGroup.Name),
                         ShowPricesIncludingVAT = productCatalog.ShowPricesIncludingVAT,
@@ -39,6 +39,8 @@ namespace uCommerce.uConnector.Adapters.Senders
                         SortOrder = productCatalog.SortOrder
                     };
 
+                    UpdateCatalog(productCatalog, productCatalogDef);
+
                     Console.WriteLine($"......adding {productCatalog.Name} catalog");
                     _session.SaveOrUpdate(productCatalogDef);
                 }
@@ -46,6 +48,54 @@ namespace uCommerce.uConnector.Adapters.Senders
                 tx.Commit();
             }
             _session.Flush();
+        }
+
+        private void UpdateCatalog(ProductCatalog currentCatalog, ProductCatalog newCatalog)
+        {
+            UpdatePriceGroup(currentCatalog, newCatalog);
+            // ...
+        }
+
+        private void UpdatePriceGroup(ProductCatalog currentCatalog, ProductCatalog newCatalog)
+        {
+            var priceGroup = _session.Query<PriceGroup>().SingleOrDefault(a => a.Name == currentCatalog.PriceGroup.Name);
+            if (priceGroup != null)
+            {
+                newCatalog.PriceGroup = priceGroup;
+                return;
+            }
+
+            priceGroup = new PriceGroup()
+            {
+                Name = currentCatalog.PriceGroup.Name,
+                Description = currentCatalog.PriceGroup.Description,
+                Deleted = false,
+                VATRate = currentCatalog.PriceGroup.VATRate,
+            };
+
+            newCatalog.PriceGroup = priceGroup;
+            UpdatePriceGroupCurrency(currentCatalog.PriceGroup.Currency, newCatalog);
+        }
+
+        private void UpdatePriceGroupCurrency(Currency currentCurrency, ProductCatalog newCatalog)
+        {
+            var currency = _session.Query<Currency>()
+                .SingleOrDefault(a => a.ISOCode == currentCurrency.ISOCode);
+            if (currency != null)
+            {
+                newCatalog.PriceGroup.Currency = currency;
+                return;
+            }
+
+            currency = new Currency()
+            {
+                ISOCode = currentCurrency.ISOCode,
+                Deleted = false,
+                ExchangeRate = currentCurrency.ExchangeRate,
+                Name = currentCurrency.Name
+            };
+
+            newCatalog.PriceGroup.Currency = currency;
         }
 
         public string ConnectionString { get; set; }
