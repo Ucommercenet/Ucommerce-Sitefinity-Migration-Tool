@@ -55,18 +55,17 @@ namespace uCommerce.SfConnector.Transformers
                 product.AllowOrdering = true;
                 product.Rating = null;
 
-                var categoryAssociations = connection.Query<string>(
-                    "select taxa.title_ from sf_ec_product prod " +
+                var categoryAssociations = connection.Query<Guid>(
+                    "select taxa.id from sf_ec_product prod " +
                     "join sf_ec_product_department dept on prod.id = dept.id " +
                     "join sf_taxa taxa on dept.val = taxa.id " +
                     $"where prod.id = '{sfProduct.Id}'");
-                // TODO: category names are not guaranteed to be unique
 
                 foreach (var categoryAssociation in categoryAssociations)
                 {
                     product.AddCategory(new Category
                     {
-                        Name = categoryAssociation,
+                        Name = categoryAssociation.ToString(),
                         SortOrder = 0
                     }, 0);
                 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NHibernate;
+using NHibernate.Hql.Ast.ANTLR.Tree;
 using NHibernate.Linq;
 using uCommerce.uConnector.Helpers;
 using UCommerce.EntitiesV2;
@@ -14,6 +15,8 @@ namespace uCommerce.uConnector.Adapters.Senders
     /// </summary>
     public class TaxonomyToUCommerce : Configurable, ISender<IEnumerable<Category>>
     {
+        public string ConnectionString { get; set; }
+
         private ISession _session;
 
         public void Send(IEnumerable<Category> @from)
@@ -25,9 +28,6 @@ namespace uCommerce.uConnector.Adapters.Senders
             {
                 foreach (var tempCategory in tempCategories)
                 {
-                    var existingCategory = _session.Query<Category>().Where(x => x.Name == tempCategory.Name);
-                    if (existingCategory.Any()) continue;
-
                     var newCategory = PopulateCategory(tempCategory);
                     Console.WriteLine($"......adding {newCategory.Name} category");
                     _session.SaveOrUpdate(newCategory);
@@ -54,23 +54,26 @@ namespace uCommerce.uConnector.Adapters.Senders
             }
         }
 
-        // Recursively add the child lineage for a category
+        // Add the child lineage for a category
         private void AddCategoryChildren(Category tempCategory)
         {
             if (tempCategory.Categories == null) return;
 
+            var categorySitefinityId = tempCategory.CategoryProperties.First(x => x.DefinitionField.Name == "SitefinityId").Value;
+            var parentCategory = _session.Query<Category>().SingleOrDefault(
+                x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == categorySitefinityId) == 1);
+
             foreach (var tempChildCategory in tempCategory.Categories)
             {
-                var parentCategory = _session.Query<Category>().SingleOrDefault(x => x.Name == tempCategory.Name);
-                var childCategory = _session.Query<Category>().SingleOrDefault(x => x.Name == tempChildCategory.Name);
+                var childCategorySitefinityId = tempChildCategory.CategoryProperties.First(x => x.DefinitionField.Name == "SitefinityId").Value;
+                var childCategory = _session.Query<Category>().SingleOrDefault(
+                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == childCategorySitefinityId) == 1);
 
                 if (parentCategory == null || childCategory == null) continue;
 
                 parentCategory.AddCategory(childCategory);
                 Console.WriteLine($"......adding {childCategory.Name} child category to {parentCategory.Name}");
                 _session.SaveOrUpdate(parentCategory);
-
-                //AddCategoryChildren(childCategory);
             }
         }
 
@@ -92,12 +95,55 @@ namespace uCommerce.uConnector.Adapters.Senders
         {
             // Category Descriptions
             UpdateCategoryDescription(currentCategory, newCategory);
-
             // ProductCatalog association
             UpdateProductCatalogAssociation(currentCategory, newCategory);
-
             // Category Definition
             UpdateCategoryDefinition(currentCategory, newCategory);
+            // Category Custom Properties/Definitions
+            UpdateCategoryProperties(currentCategory, newCategory);
+        }
+
+        private void UpdateCategoryProperties(Category currentCategory, Category newCategory)
+        {
+            foreach (var property in currentCategory.CategoryProperties)
+            {
+                newCategory.CategoryProperties.Add(new CategoryProperty()
+                {
+                    DefinitionField = GetCategoryPropertyDefinitionField(property.DefinitionField),
+                    Value = property.Value,
+                    CultureCode = property.CultureCode,
+                    Category = newCategory
+                });
+            }
+        }
+
+        private DefinitionField GetCategoryPropertyDefinitionField(DefinitionField sourceDefinitionField)
+        {
+            var definitionField = _session.Query<DefinitionField>().FirstOrDefault(x => x.Name == sourceDefinitionField.Name);
+
+            if (definitionField != null)
+            {
+                return definitionField;
+            }
+            // TODO: property associated to wrong Dessert category in UCommerce
+
+            var defaultDefinition = _session.Query<Definition>().FirstOrDefault(x => x.Name == "Default Category Definition");
+            var dataType = _session.Query<DataType>().FirstOrDefault(x => x.TypeName == "ShortText");
+            definitionField =  new DefinitionField()
+            {
+                Name = sourceDefinitionField.Name,
+                Multilingual = sourceDefinitionField.Multilingual,
+                Searchable = sourceDefinitionField.Searchable,
+                BuiltIn = sourceDefinitionField.BuiltIn,
+                DefaultValue = sourceDefinitionField.DefaultValue,
+                DisplayOnSite = sourceDefinitionField.DisplayOnSite,
+                DataType = dataType,
+                Definition = defaultDefinition
+            };
+
+            _session.SaveOrUpdate(definitionField);
+
+            return definitionField;
         }
 
         private void UpdateCategoryDefinition(Category currentCategory, Category newCategory)
@@ -117,7 +163,5 @@ namespace uCommerce.uConnector.Adapters.Senders
 
             newCategory.AddCategoryDescription(categoryDescription);
         }
-
-        public string ConnectionString { get; set; }
     }
 }

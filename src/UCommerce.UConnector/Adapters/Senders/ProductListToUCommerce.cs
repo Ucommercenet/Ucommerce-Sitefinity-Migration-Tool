@@ -165,17 +165,8 @@ namespace uCommerce.uConnector.Adapters.Senders
 
 		private Category GetCategory(Category newCategory)
 		{
-			if (newCategory.ProductCatalog != null && newCategory.ProductCatalog.ProductCatalogGroup != null)
-			{
-				return _session.Query<Category>().SingleOrDefault(x => x.Name == newCategory.Name && x.ProductCatalog.Name == newCategory.ProductCatalog.Name && x.ProductCatalog.ProductCatalogGroup.Name == newCategory.ProductCatalog.ProductCatalogGroup.Name);
-			}
-
-			if (newCategory.ProductCatalog != null)
-			{
-				return _session.Query<Category>().SingleOrDefault(x => x.Name == newCategory.Name && x.ProductCatalog.Name == newCategory.ProductCatalog.Name);
-			}
-
-			return _session.Query<Category>().SingleOrDefault(x => x.Name == newCategory.Name);
+		    return _session.Query<Category>().SingleOrDefault(
+		        x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == newCategory.Name) == 1);
 		}
 
 		private void UpdateProductPrices(Product currentProduct, Product newProduct)

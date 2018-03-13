@@ -20,14 +20,13 @@ namespace uCommerce.SfConnector.Transformers
 
             foreach (var sfCategory in sfCategories)
             {
-
                 // Base category
                 var category = new Category
                 {
                     Name = sfCategory.Title_,
                     ProductCatalog = currentCatalog,
                     Definition = categoryDefinition,
-                    DisplayOnSite = true
+                    DisplayOnSite = true,
                 };
 
                 // Category descriptions
@@ -40,12 +39,31 @@ namespace uCommerce.SfConnector.Transformers
                     Category = category
                 });
 
+                category.AddCategoryProperty(new CategoryProperty()
+                {
+                    DefinitionField = GetCategoryPropertyDefinitionField("SitefinityId"),
+                    Value = sfCategory.Id.ToString()
+                });
+
                 tempCategories.Add(category);
             }
 
             BuildParentChildCategoryRelationships(tempCategories, sfCategories);
 
             return tempCategories;
+        }
+
+        private DefinitionField GetCategoryPropertyDefinitionField(string definitionFieldName)
+        {
+            return new DefinitionField()
+            {
+                BuiltIn = false,
+                DefaultValue = string.Empty,
+                DisplayOnSite = false,
+                Name = definitionFieldName,
+                Multilingual = false,
+                Searchable = false,
+            };
         }
 
         private void BuildParentChildCategoryRelationships(List<Category> destCategories, List<SitefinityTaxonomy> sourceCategories)
@@ -62,8 +80,10 @@ namespace uCommerce.SfConnector.Transformers
 
             foreach (var sourceChildCategory in sourceChildCategories)
             {
-                var destCategory = destCategories.First(x => x.Name == sourceCategory.Title_);
-                var destChildCategory = destCategories.First(x => x.Name == sourceChildCategory.Title_);
+                var destCategory = destCategories.First(
+                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == sourceCategory.Id.ToString()) == 1);
+                var destChildCategory = destCategories.First(
+                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == sourceChildCategory.Id.ToString()) == 1);
 
                 if (destCategory != null && destChildCategory != null)
                 {

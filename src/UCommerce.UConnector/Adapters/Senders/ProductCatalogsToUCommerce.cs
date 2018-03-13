@@ -81,6 +81,7 @@ namespace uCommerce.uConnector.Adapters.Senders
         {
             var currency = _session.Query<Currency>()
                 .SingleOrDefault(a => a.ISOCode == currentCurrency.ISOCode);
+
             if (currency != null)
             {
                 newCatalog.PriceGroup.Currency = currency;
