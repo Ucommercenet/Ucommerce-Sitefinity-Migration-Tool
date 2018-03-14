@@ -7,42 +7,44 @@ namespace MigrationCommandLineRunner
 {
     public class Program
     {
+        private static readonly log4net.ILog Log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         /// <summary>
         /// Command line runner entry point
         /// </summary>
         static void Main(string[] args)
         {
-            Console.WriteLine("====Data Migration CommandLine Runner====");
-            Console.WriteLine();
+            try
+            {
+                Log.Info("======== Data Migration CommandLine Runner ========");
+                var operationEngine = new OperationEngine();
 
-            var operationEngine = new OperationEngine();
+                Log.Info("******** Preparing Sitefinity database ****");
+                PrepareSitefinityDatabase.BuildProductToProductTypesTable();
 
-            Console.WriteLine("... Preparing Sitefinity database");
-            PrepareSitefinityDatabase.BuildProductToProductTypesTable();
-            Console.WriteLine();
+                Log.Info("******** Migrating catalogs ********");
+                var migrateCatalogs = new MigrateCatalogs {Log = Log};
+                operationEngine.Execute(migrateCatalogs.BuildOperation());
 
-            Console.WriteLine("... Migrating catalogs");
-            var operation = new MigrateCatalogs().BuildOperation();
-            operationEngine.Execute(operation);
-            Console.WriteLine();
+                Log.Info("******** Migrating taxonomy ********");
+                var migrateTaxonomy = new MigrateTaxonomy() {Log = Log};
+                operationEngine.Execute(migrateTaxonomy.BuildOperation());
 
-            Console.WriteLine("... Migrating taxonomy");
-            operation = new MigrateTaxonomy().BuildOperation();
-            operationEngine.Execute(operation);
-            Console.WriteLine();
+                Log.Info("******** Migrating product types ********");
+                var migrateProductTypes = new MigrateProductTypes {Log = Log};
+                operationEngine.Execute(migrateProductTypes.BuildOperation());
 
-            Console.WriteLine("... Migrating product types");
-            operation = new MigrateProductTypes().BuildOperation();
-            operationEngine.Execute(operation);
-            Console.WriteLine();
+                Log.Info("******** Migrating core product data ********");
+                var migrateProductData = new MigrateProductData {Log = Log};
+                operationEngine.Execute(migrateProductData.BuildOperation());
 
-            Console.WriteLine("... Migrating core product data");
-            operationEngine.Execute(new MigrateProductData().BuildOperation());
-
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine("=========Data Migration Complete=========");
-            Console.Read();
+                Log.Info("========= Data Migration Complete =========");
+                Console.Read();
+            }
+            catch (Exception ex)
+            {
+                Log.Error("There was an error while executing the migration.  Details: ", ex);
+                Console.Read();
+            }
         }
     }
 }

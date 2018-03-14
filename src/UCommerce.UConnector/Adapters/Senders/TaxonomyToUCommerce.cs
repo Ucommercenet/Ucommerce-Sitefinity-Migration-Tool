@@ -14,9 +14,10 @@ namespace uCommerce.uConnector.Adapters.Senders
     /// </summary>
     public class TaxonomyToUCommerce : Configurable, ISender<IEnumerable<Category>>
     {
-        public string ConnectionString { get; set; }
-
         private ISession _session;
+
+        public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         public void Send(IEnumerable<Category> @from)
         {
@@ -28,7 +29,7 @@ namespace uCommerce.uConnector.Adapters.Senders
                 foreach (var sourceCategory in sourceCategories)
                 {
                     var destCategory = PopulateCategory(sourceCategory);
-                    Console.WriteLine($"......adding {destCategory.Name} category");
+                    Log.Info($"adding {destCategory.Name} category");
                     _session.SaveOrUpdate(destCategory);
                 }
 
@@ -71,7 +72,7 @@ namespace uCommerce.uConnector.Adapters.Senders
                 if (parentCategory == null || childCategory == null) continue;
 
                 parentCategory.AddCategory(childCategory);
-                Console.WriteLine($"......adding {childCategory.Name} child category to {parentCategory.Name}");
+                Log.Info($"adding {childCategory.Name} child category to {parentCategory.Name}");
                 _session.SaveOrUpdate(parentCategory);
             }
         }

@@ -16,6 +16,9 @@ namespace uCommerce.uConnector.Adapters.Senders
     {
         private ISession _session;
 
+        public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
+
         /// <summary>
         /// Commit new product definitions to the UCommerce database
         /// </summary>
@@ -36,7 +39,7 @@ namespace uCommerce.uConnector.Adapters.Senders
                             Name = tempProductDef.Name
                         };
 
-                        Console.WriteLine($"......adding {tempProductDef.Name} product definition");
+                        Log.Info($"adding {tempProductDef.Name} product definition");
                         _session.SaveOrUpdate(productDef);
                     }
                 }
@@ -44,7 +47,5 @@ namespace uCommerce.uConnector.Adapters.Senders
             }
             _session.Flush();
         }
-
-        public string ConnectionString { get; set; }
     }
 }

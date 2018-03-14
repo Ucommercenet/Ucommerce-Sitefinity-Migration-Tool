@@ -15,6 +15,7 @@ namespace uCommerce.SfConnector.Adapters.Receivers
     public class ProductListFromSitefinity : Configurable, IReceiver<IEnumerable<SitefinityProduct>>
     {
         public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         /// <summary>
         /// Query all product data

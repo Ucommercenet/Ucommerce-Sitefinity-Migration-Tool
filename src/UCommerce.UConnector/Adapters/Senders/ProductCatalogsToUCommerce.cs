@@ -10,8 +10,11 @@ using UConnector.Framework;
 namespace uCommerce.uConnector.Adapters.Senders
 {
     public class ProductCatalogsToUCommerce : Configurable, ISender<IEnumerable<ProductCatalog>>
-    {
+    {    
         private ISession _session;
+
+        public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         public void Send(IEnumerable<ProductCatalog> productCatalogs)
         {
@@ -37,7 +40,7 @@ namespace uCommerce.uConnector.Adapters.Senders
 
                     UpdateCatalog(productCatalog, productCatalogDef);
 
-                    Console.WriteLine($"......adding {productCatalog.Name} catalog");
+                    Log.Info($"adding {productCatalog.Name} catalog");
                     _session.SaveOrUpdate(productCatalogDef);
                 }
 
@@ -116,7 +119,5 @@ namespace uCommerce.uConnector.Adapters.Senders
 
             return currency;
         }
-
-        public string ConnectionString { get; set; }
     }
 }

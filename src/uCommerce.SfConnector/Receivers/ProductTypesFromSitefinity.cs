@@ -9,6 +9,7 @@ namespace uCommerce.SfConnector.Adapters.Receivers
     public class ProductTypesFromSitefinity : Configurable, IReceiver<IEnumerable<SitefinityProductType>>
     {
         public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         public IEnumerable<SitefinityProductType> Receive()
         {

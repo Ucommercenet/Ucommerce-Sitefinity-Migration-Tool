@@ -11,6 +11,8 @@ namespace MigrationCommandLineRunner.Operations
 {
     public class MigrateTaxonomy : IMigrationOperation
     {
+        public log4net.ILog Log { private get; set; }
+
         public IOperation BuildOperation()
         {
             var sitefinityConnectionString = ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString;
@@ -20,11 +22,13 @@ namespace MigrationCommandLineRunner.Operations
                 .Receive<TaxonomyFromSitefinity>() 
                     .WithOption(x => x.ConnectionString = sitefinityConnectionString)
                     .WithOption(x => x.SitefinityDepartmentTaxonomyId= MigrationSettings.Settings.SitefinityDepartmentTaxonomyId)
+                    .WithOption(x => x.Log = Log)
                 .Transform<SfTaxonomyToUcTaxonomy>()
                     .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultUcommerceCatalogName)
                     .WithOption(x => x.DefaultCategoryDefinitionName = MigrationSettings.Settings.DefaultUcommerceCategoryDefinitionName)
                 .Send<TaxonomyToUCommerce>()
-                .WithOption(x => x.ConnectionString = uCommerceConnectionString)
+                    .WithOption(x => x.ConnectionString = uCommerceConnectionString)
+                    .WithOption(x => x.Log = Log)
                 .ToOperation();
         }
     }

@@ -10,6 +10,7 @@ namespace uCommerce.SfConnector.Receivers
     {
         public string ConnectionString { private get; set; }
         public string SitefinityDepartmentTaxonomyId { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         public IEnumerable<SitefinityTaxonomy> Receive()
         {

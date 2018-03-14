@@ -13,7 +13,10 @@ namespace uCommerce.uConnector.Adapters.Senders
 	{
 		private ISession _session;
 
-		public void Send(IEnumerable<Product> input)
+	    public string ConnectionString { private get; set; }
+	    public log4net.ILog Log { private get; set; }
+
+        public void Send(IEnumerable<Product> input)
 		{
 			_session = SessionFactory.Create(ConnectionString);
 
@@ -32,7 +35,7 @@ namespace uCommerce.uConnector.Adapters.Senders
 							ProductDefinition =
 								_session.Query<ProductDefinition>().FirstOrDefault(x => x.Name == sourceProduct.ProductDefinition.Name)
 						};
-					    Console.WriteLine($"......adding {AbridgedName(sourceProduct.Name)} product");
+					    Log.Info($"adding {AbridgedName(sourceProduct.Name)} product");
 						_session.SaveOrUpdate(destProduct);
 					}
 
@@ -159,7 +162,7 @@ namespace uCommerce.uConnector.Adapters.Senders
 
 					category.CategoryProductRelations.Add(categoryRelation);
 
-				    Console.WriteLine($".........associating {AbridgedName(sourceProduct.Name)} product to category {category.Name}");
+				    Log.Info($"  associating {AbridgedName(sourceProduct.Name)} product to category {category.Name}");
                     _session.Save(categoryRelation);
 				}
 			}
@@ -232,7 +235,5 @@ namespace uCommerce.uConnector.Adapters.Senders
 
 	        return name;
 	    }
-
-		public string ConnectionString { get; set; }
 	}
 }

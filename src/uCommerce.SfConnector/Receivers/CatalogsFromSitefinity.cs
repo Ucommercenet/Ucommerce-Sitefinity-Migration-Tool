@@ -9,6 +9,7 @@ namespace uCommerce.SfConnector.Receivers
     public class CatalogsFromSitefinity : Configurable, IReceiver<IEnumerable<SitefinityCatalog>>
     {
         public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         public IEnumerable<SitefinityCatalog> Receive()
         {
@@ -18,7 +19,7 @@ namespace uCommerce.SfConnector.Receivers
             {
                 new SitefinityCatalog()
                 {
-                    CatalogName = "Albert New Catalog",
+                    CatalogName = "New Catalog",
                 }
             };
         }
