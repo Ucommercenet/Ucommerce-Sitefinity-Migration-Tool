@@ -1,4 +1,5 @@
 ﻿using System;
+using MigrationCommandLineRunner.Helpers;
 using MigrationCommandLineRunner.Operations;
 using UConnector;
 
@@ -15,6 +16,10 @@ namespace MigrationCommandLineRunner
             Console.WriteLine();
 
             var operationEngine = new OperationEngine();
+
+            Console.WriteLine("... Preparing Sitefinity database");
+            PrepareSitefinityDatabase.BuildProductToProductTypesTable();
+            Console.WriteLine();
 
             Console.WriteLine("... Migrating catalogs");
             var operation = new MigrateCatalogs().BuildOperation();
