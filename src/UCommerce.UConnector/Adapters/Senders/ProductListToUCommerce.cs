@@ -19,67 +19,69 @@ namespace uCommerce.uConnector.Adapters.Senders
 
 			using (var tx = _session.BeginTransaction())
 			{
-				foreach (var tempProduct in input)
+				foreach (var sourceProduct in input)
 				{
-					var product = _session.Query<Product>().SingleOrDefault(a => a.Sku == tempProduct.Sku && a.VariantSku == null);
-					if (product == null) // Create product
+					var destProduct = _session.Query<Product>().SingleOrDefault(a => a.Sku == sourceProduct.Sku && a.VariantSku == null);
+					if (destProduct == null) // Create product
 					{
-						product = new Product
+						destProduct = new Product
 						{
-							Sku = tempProduct.Sku,
-							Name = tempProduct.Name,
+							Sku = sourceProduct.Sku,
+							Name = sourceProduct.Name,
 							VariantSku = null,
 							ProductDefinition =
-								_session.Query<ProductDefinition>().FirstOrDefault(x => x.Name == tempProduct.ProductDefinition.Name)
+								_session.Query<ProductDefinition>().FirstOrDefault(x => x.Name == sourceProduct.ProductDefinition.Name)
 						};
-					    Console.WriteLine($"......adding {AbridgedName(tempProduct.Name)} product");
-						_session.SaveOrUpdate(product);
+					    Console.WriteLine($"......adding {AbridgedName(sourceProduct.Name)} product");
+						_session.SaveOrUpdate(destProduct);
 					}
 
-                    UpdateProduct(product, tempProduct, _session); // Update relations, categories, etc.
+                    UpdateProduct(sourceProduct, destProduct); // Update relations, categories, etc.
 				}
 				tx.Commit();
 			}
 			_session.Flush();
 		}
 
-		private void UpdateProduct(Product currentProduct, Product newProduct, ISession session)
+		private void UpdateProduct(Product sourceProduct, Product destProduct)
 		{
 			// Product
-			UpdateProductValueTypes(currentProduct, newProduct);
+			UpdateProductValueTypes(sourceProduct, destProduct);
 
 			// Product.Definiton ( Multilingual and Definitions )
-			UpdateProductDescriptions(currentProduct, newProduct);
+			UpdateProductDescriptions(sourceProduct, destProduct);
 
 			// ProductProperties
-			UpdateProductProperties(currentProduct, newProduct);
+			UpdateProductProperties(sourceProduct, destProduct);
 
 			// Prices
-			UpdateProductPrices(currentProduct, newProduct);
+			UpdateProductPrices(sourceProduct, destProduct);
 
 			// Categories
-			UpdateProductCategories(currentProduct, newProduct, session);
+			UpdateProductCategories(sourceProduct, destProduct);
 
 			// Variants
-			UpdateProductVariants(currentProduct, newProduct, session);
+			UpdateProductVariants(sourceProduct, destProduct);
 		}
 
-		private void UpdateProductProperties(Product currentProduct, Product newProduct)
+		private void UpdateProductProperties(Product sourceProduct, Product destProduct)
 		{
-			var productDefinition = _session.Query<ProductDefinition>().SingleOrDefault(x => x.Name == newProduct.ProductDefinition.Name);
-			if (productDefinition == null)
-				return;
+			var productDefinition = _session.Query<ProductDefinition>().SingleOrDefault(x => x.Name == sourceProduct.ProductDefinition.Name);
+		    if (productDefinition == null)
+		    {
+		        return;
+		    }
 
-			if (currentProduct.ProductDefinition.Name != productDefinition.Name)
+		    if (destProduct.ProductDefinition.Name != productDefinition.Name)
 			{
-				currentProduct.ProductDefinition = productDefinition;
+				destProduct.ProductDefinition = productDefinition;
 			}
 
-			var newProductProperties = newProduct.ProductProperties;
+			var destProductProperties = sourceProduct.ProductProperties;
 
-			foreach (var newProperty in newProductProperties)
+			foreach (var newProperty in destProductProperties)
 			{
-				var currentProductProperty = currentProduct.GetProperties().Cast<ProductProperty>().SingleOrDefault(
+				var currentProductProperty = destProduct.GetProperties().Cast<ProductProperty>().SingleOrDefault(
 					x => !x.ProductDefinitionField.Deleted && (x.ProductDefinitionField.Name == newProperty.ProductDefinitionField.Name));
 
 				if (currentProductProperty != null) // Update
@@ -89,7 +91,7 @@ namespace uCommerce.uConnector.Adapters.Senders
 				else // Insert
 				{
 					var productDefinitionField =
-						currentProduct.GetDefinition()
+						destProduct.GetDefinition()
 							.GetDefinitionFields().Cast<ProductDefinitionField>()
 							.SingleOrDefault(x => x.Name == newProperty.ProductDefinitionField.Name);
 
@@ -100,21 +102,21 @@ namespace uCommerce.uConnector.Adapters.Senders
 							ProductDefinitionField = productDefinitionField,
 							Value = newProperty.Value
 						};
-						currentProduct.AddProductProperty(currentProductProperty);
+						destProduct.AddProductProperty(currentProductProperty);
 					}
 				}
 			}
 		}
 
-		private void UpdateProductVariants(Product currentProduct, Product newProduct, ISession session)
+		private void UpdateProductVariants(Product sourceProduct, Product destProduct)
 		{
-			var newVariants = newProduct.Variants;
+			var newVariants = sourceProduct.Variants;
 			foreach (var newVariant in newVariants)
 			{
-				var currentVariant = currentProduct.Variants.SingleOrDefault(x => x.VariantSku == newVariant.VariantSku);
+				var currentVariant = destProduct.Variants.SingleOrDefault(x => x.VariantSku == newVariant.VariantSku);
 				if (currentVariant != null) // Update
 				{
-					UpdateProduct(currentVariant, newVariant, session);
+					UpdateProduct(currentVariant, newVariant);
 				}
 				else // Insert
 				{
@@ -126,19 +128,19 @@ namespace uCommerce.uConnector.Adapters.Senders
 						Sku = newVariant.Sku,
 						Name = newVariant.Name,
 						VariantSku = newVariant.VariantSku,
-						ProductDefinition = currentProduct.ProductDefinition
+						ProductDefinition = sourceProduct.ProductDefinition
 					};
-					session.Save(product);
+					_session.Save(product);
 
-					UpdateProduct(product, newVariant, session);
-					currentProduct.AddVariant(product);
+					UpdateProduct(product, newVariant);
+					sourceProduct.AddVariant(product);
 				}
 			}
 		}
 
-		private void UpdateProductCategories(Product currentProduct, Product newProduct, ISession session)
+		private void UpdateProductCategories(Product sourceProduct, Product destProduct)
 		{
-			var newCategories = newProduct.CategoryProductRelations;
+			var newCategories = sourceProduct.CategoryProductRelations;
 
 			foreach (var relation in newCategories)
 			{
@@ -148,16 +150,16 @@ namespace uCommerce.uConnector.Adapters.Senders
 					throw new Exception(string.Format("Could not find category: {0}", relation.Category.Name));
 				}
 
-				if (!category.Products.Any(x => x.Sku == currentProduct.Sku && x.VariantSku == currentProduct.VariantSku))
+				if (!category.Products.Any(x => x.Sku == sourceProduct.Sku && x.VariantSku == sourceProduct.VariantSku))
 				{
 					var categoryRelation = new CategoryProductRelation();
-					categoryRelation.Product = currentProduct;
+					categoryRelation.Product = destProduct;
 					categoryRelation.SortOrder = 0;
 					categoryRelation.Category = category;
 
 					category.CategoryProductRelations.Add(categoryRelation);
 
-				    Console.WriteLine($".........associating {AbridgedName(currentProduct.Name)} product to category {category.Name}");
+				    Console.WriteLine($".........associating {AbridgedName(sourceProduct.Name)} product to category {category.Name}");
                     _session.Save(categoryRelation);
 				}
 			}
@@ -169,13 +171,13 @@ namespace uCommerce.uConnector.Adapters.Senders
 		        x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == newCategory.Name) == 1);
 		}
 
-		private void UpdateProductPrices(Product currentProduct, Product newProduct)
+		private void UpdateProductPrices(Product sourceProduct, Product destProduct)
 		{
-			var newPrices = newProduct.PriceGroupPrices;
+            var newPrices = sourceProduct.PriceGroupPrices;
 
 			foreach (var price in newPrices)
 			{
-				var priceGroupPrice = currentProduct.PriceGroupPrices.SingleOrDefault(a => a.PriceGroup.Name == price.PriceGroup.Name);
+				var priceGroupPrice = destProduct.PriceGroupPrices.SingleOrDefault(a => a.PriceGroup.Name == price.PriceGroup.Name);
 				if (priceGroupPrice != null) // Update
 				{
 					priceGroupPrice.Price = price.Price;
@@ -186,37 +188,37 @@ namespace uCommerce.uConnector.Adapters.Senders
 					if (priceGroup != null) // It exist, then insert it
 					{
 						price.PriceGroup = priceGroup;
-						currentProduct.AddPriceGroupPrice(price);
+						destProduct.AddPriceGroupPrice(price);
 					}
 				}
 			}
 		}
 
-		private void UpdateProductValueTypes(Product currentProduct, Product newProduct)
+		private void UpdateProductValueTypes(Product sourceProduct, Product destProduct)
 		{
-			currentProduct.Name = newProduct.Name;
-			currentProduct.DisplayOnSite = newProduct.DisplayOnSite;
-			currentProduct.ThumbnailImageMediaId = newProduct.ThumbnailImageMediaId;
-			currentProduct.PrimaryImageMediaId = newProduct.PrimaryImageMediaId;
-			currentProduct.Weight = newProduct.Weight;
-			currentProduct.AllowOrdering = newProduct.AllowOrdering;
-			currentProduct.Rating = newProduct.Rating;
+			destProduct.Name = sourceProduct.Name;
+			destProduct.DisplayOnSite = sourceProduct.DisplayOnSite;
+			destProduct.ThumbnailImageMediaId = sourceProduct.ThumbnailImageMediaId;
+			destProduct.PrimaryImageMediaId = sourceProduct.PrimaryImageMediaId;
+			destProduct.Weight = sourceProduct.Weight;
+			destProduct.AllowOrdering = sourceProduct.AllowOrdering;
+			destProduct.Rating = sourceProduct.Rating;
 		}
 
-		private void UpdateProductDescriptions(Product currentProduct, Product newProduct)
+		private void UpdateProductDescriptions(Product sourceProduct, Product destProduct)
 		{
-			foreach (var productDescription in newProduct.ProductDescriptions)
+			foreach (var productDescription in sourceProduct.ProductDescriptions)
 			{
-				var currentProductDescription = currentProduct.ProductDescriptions.SingleOrDefault(a => a.CultureCode == productDescription.CultureCode);
-				if (currentProductDescription != null) // Update
+				var destProductDescription = destProduct.ProductDescriptions.SingleOrDefault(a => a.CultureCode == productDescription.CultureCode);
+				if (destProductDescription != null) // Update
 				{
-					currentProductDescription.DisplayName = productDescription.DisplayName;
-					currentProductDescription.ShortDescription = productDescription.ShortDescription;
-					currentProductDescription.LongDescription = productDescription.LongDescription;
+					destProductDescription.DisplayName = productDescription.DisplayName;
+					destProductDescription.ShortDescription = productDescription.ShortDescription;
+					destProductDescription.LongDescription = productDescription.LongDescription;
 				}
 				else // Insert
 				{
-					currentProduct.AddProductDescription(productDescription);
+					destProduct.AddProductDescription(productDescription);
 				}
 			}
 		}

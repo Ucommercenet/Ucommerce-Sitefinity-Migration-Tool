@@ -8,6 +8,9 @@ namespace uCommerce.SfConnector.Transformers
     public class SfCatalogsToUcCatalogs : ITransformer<IEnumerable<SitefinityCatalog>, IEnumerable<ProductCatalog>>
     {
         public string DefaultCatalogName { private get; set; }
+        public string DefaultCatalogGroupName { private get; set; }
+        public string DefaultPriceGroupName { private get; set; }
+        public string DefaultCurrencyISOCode { private get; set; }
 
         public IEnumerable<ProductCatalog> Execute(IEnumerable<SitefinityCatalog> @from)
         {
@@ -26,21 +29,25 @@ namespace uCommerce.SfConnector.Transformers
             var uCommerceCatalog = new ProductCatalog
             {
                 Name = DefaultCatalogName,
-                PriceGroup = new PriceGroup() // TODO
+                PriceGroup = new PriceGroup() 
                 {
-                    Name = "JP",
+                    Name = DefaultPriceGroupName,
                     Deleted = false,
-                    Currency = new Currency()
+                    Currency = CreateDefaultCurrency()
+                },
+                ProductCatalogGroup = new ProductCatalogGroup() 
+                {
+                    Name = DefaultCatalogGroupName,
+                    Currency = CreateDefaultCurrency(),
+                    CreateCustomersAsMembers = true,
+                    ProductReviewsRequireApproval = true,
+                    Deleted = false,
+                    EmailProfile = new EmailProfile()
                     {
-                        ISOCode = "YEN",
-                        ExchangeRate = 100,
-                        Deleted = false
+                        Name = "Default"
                     }
                 },
-                ProductCatalogGroup = new ProductCatalogGroup() // TODO
-                {
-                    Name = "uCommerce.dk"
-                },
+
                 ShowPricesIncludingVAT = true,
                 DisplayOnWebSite = true,
                 LimitedAccess = false,
@@ -49,6 +56,16 @@ namespace uCommerce.SfConnector.Transformers
             };
 
             return uCommerceCatalog;
+        }
+
+        private Currency CreateDefaultCurrency()
+        {
+            return new Currency()
+            {  
+                ISOCode = DefaultCurrencyISOCode,
+                ExchangeRate = 0,
+                Deleted = false
+            };
         }
     }
 }

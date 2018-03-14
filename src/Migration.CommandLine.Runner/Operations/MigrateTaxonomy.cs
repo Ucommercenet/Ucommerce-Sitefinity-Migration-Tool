@@ -17,11 +17,12 @@ namespace MigrationCommandLineRunner.Operations
             var uCommerceConnectionString = ConfigurationManager.ConnectionStrings["UCommerceConnectionString"].ConnectionString;
 
             return FluentOperationBuilder
-                .Receive<TaxonomyFromSitefinity>()
-                .WithOption(x => x.ConnectionString = sitefinityConnectionString)
+                .Receive<TaxonomyFromSitefinity>() 
+                    .WithOption(x => x.ConnectionString = sitefinityConnectionString)
+                    .WithOption(x => x.SitefinityDepartmentTaxonomyId= MigrationSettings.Settings.SitefinityDepartmentTaxonomyId)
                 .Transform<SfTaxonomyToUcTaxonomy>()
-                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultCatalogName)
-                    .WithOption(x => x.DefaultCategoryDefinitionName = MigrationSettings.Settings.DefaultCategoryDefinitionName)
+                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultUcommerceCatalogName)
+                    .WithOption(x => x.DefaultCategoryDefinitionName = MigrationSettings.Settings.DefaultUcommerceCategoryDefinitionName)
                 .Send<TaxonomyToUCommerce>()
                 .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                 .ToOperation();

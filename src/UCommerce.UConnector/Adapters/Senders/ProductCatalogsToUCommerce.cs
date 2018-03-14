@@ -28,10 +28,6 @@ namespace uCommerce.uConnector.Adapters.Senders
                     productCatalogDef = new ProductCatalog
                     {
                         Name = productCatalog.Name,
-                       // PriceGroup = _session.Query<PriceGroup>()
-                       //     .SingleOrDefault(a => a.Name == productCatalog.PriceGroup.Name),
-                        ProductCatalogGroup = _session.Query<ProductCatalogGroup>()
-                            .SingleOrDefault(a => a.Name == productCatalog.ProductCatalogGroup.Name),
                         ShowPricesIncludingVAT = productCatalog.ShowPricesIncludingVAT,
                         DisplayOnWebSite = productCatalog.DisplayOnWebSite,
                         LimitedAccess = productCatalog.LimitedAccess,
@@ -50,53 +46,75 @@ namespace uCommerce.uConnector.Adapters.Senders
             _session.Flush();
         }
 
-        private void UpdateCatalog(ProductCatalog currentCatalog, ProductCatalog newCatalog)
+        private void UpdateCatalog(ProductCatalog sourceCatalog, ProductCatalog destCatalog)
         {
-            UpdatePriceGroup(currentCatalog, newCatalog);
-            // ...
+            UpdatePriceGroup(sourceCatalog, destCatalog);
+            UpdateProductCatalogGroup(sourceCatalog, destCatalog);
         }
 
-        private void UpdatePriceGroup(ProductCatalog currentCatalog, ProductCatalog newCatalog)
+        private void UpdateProductCatalogGroup(ProductCatalog sourceCatalog, ProductCatalog destCatalog)
         {
-            var priceGroup = _session.Query<PriceGroup>().SingleOrDefault(a => a.Name == currentCatalog.PriceGroup.Name);
+            var productCatalogGroup = _session.Query<ProductCatalogGroup>()
+                .SingleOrDefault(a => a.Name == sourceCatalog.ProductCatalogGroup.Name);
+
+            if (productCatalogGroup != null)
+            {
+                destCatalog.ProductCatalogGroup = productCatalogGroup;
+                return;
+            }
+
+            productCatalogGroup = new ProductCatalogGroup()
+            {
+                CreateCustomersAsMembers = sourceCatalog.ProductCatalogGroup.CreateCustomersAsMembers,
+                ProductReviewsRequireApproval = sourceCatalog.ProductCatalogGroup.ProductReviewsRequireApproval,
+                Name = sourceCatalog.ProductCatalogGroup.Name,
+                Currency = UpdateCurrency(sourceCatalog.PriceGroup.Currency),
+                EmailProfile = _session.Query<EmailProfile>().SingleOrDefault(a => a.Name == sourceCatalog.ProductCatalogGroup.EmailProfile.Name)
+        };
+
+            destCatalog.ProductCatalogGroup = productCatalogGroup;
+        }
+
+        private void UpdatePriceGroup(ProductCatalog sourceCatalog, ProductCatalog destCatalog)
+        {
+            var priceGroup = _session.Query<PriceGroup>().SingleOrDefault(a => a.Name == sourceCatalog.PriceGroup.Name);
             if (priceGroup != null)
             {
-                newCatalog.PriceGroup = priceGroup;
+                destCatalog.PriceGroup = priceGroup;
                 return;
             }
 
             priceGroup = new PriceGroup()
             {
-                Name = currentCatalog.PriceGroup.Name,
-                Description = currentCatalog.PriceGroup.Description,
-                Deleted = false,
-                VATRate = currentCatalog.PriceGroup.VATRate,
+                Name = sourceCatalog.PriceGroup.Name,
+                Description = sourceCatalog.PriceGroup.Description,
+                Deleted = sourceCatalog.PriceGroup.Deleted,
+                VATRate = sourceCatalog.PriceGroup.VATRate,
             };
 
-            newCatalog.PriceGroup = priceGroup;
-            UpdatePriceGroupCurrency(currentCatalog.PriceGroup.Currency, newCatalog);
+            destCatalog.PriceGroup = priceGroup;
+            destCatalog.PriceGroup.Currency = UpdateCurrency(sourceCatalog.PriceGroup.Currency);
         }
 
-        private void UpdatePriceGroupCurrency(Currency currentCurrency, ProductCatalog newCatalog)
+        private Currency UpdateCurrency(Currency sourceCurrency)
         {
             var currency = _session.Query<Currency>()
-                .SingleOrDefault(a => a.ISOCode == currentCurrency.ISOCode);
+                .SingleOrDefault(a => a.ISOCode == sourceCurrency.ISOCode);
 
             if (currency != null)
             {
-                newCatalog.PriceGroup.Currency = currency;
-                return;
+                return currency;
             }
 
             currency = new Currency()
             {
-                ISOCode = currentCurrency.ISOCode,
-                Deleted = false,
-                ExchangeRate = currentCurrency.ExchangeRate,
-                Name = currentCurrency.Name
+                ISOCode = sourceCurrency.ISOCode,
+                Deleted = sourceCurrency.Deleted,
+                ExchangeRate = sourceCurrency.ExchangeRate,
+                Name = sourceCurrency.Name
             };
 
-            newCatalog.PriceGroup.Currency = currency;
+            return currency;
         }
 
         public string ConnectionString { get; set; }

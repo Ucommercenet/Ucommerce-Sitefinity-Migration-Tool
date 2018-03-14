@@ -1,4 +1,5 @@
 ﻿using System.Configuration;
+using MigrationCommandLineRunner.Configuration;
 using MigrationCommandLineRunner.Helpers;
 using uCommerce.SfConnector.Adapters.Receivers;
 using uCommerce.SfConnector.Transformers;
@@ -19,6 +20,7 @@ namespace MigrationCommandLineRunner.Operations
                 .Receive<ProductListFromSitefinity>()
                     .WithOption(x => x.ConnectionString = sitefinityConnectionString)
                 .Transform<SfProductListToUcProductList>()
+                    .WithOption(x => x.DefaultPriceGroupName = MigrationSettings.Settings.DefaultUcommercePriceGroupName)
                 .Send<ProductListToUCommerce>()
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                 .ToOperation();

@@ -14,6 +14,7 @@ namespace uCommerce.SfConnector.Transformers
 {
     public class SfProductListToUcProductList : ITransformer<IEnumerable<SitefinityProduct>, IEnumerable<Product>>
     {
+        public string DefaultPriceGroupName { get; set; }
         public string DateTimeFormat { get; set; }
         public string DecimalFormat { get; set; }
         public string DoubleFormat { get; set; }
@@ -55,36 +56,8 @@ namespace uCommerce.SfConnector.Transformers
                 product.AllowOrdering = true;
                 product.Rating = null;
 
-                var categoryAssociations = connection.Query<Guid>(
-                    "select taxa.id from sf_ec_product prod " +
-                    "join sf_ec_product_department dept on prod.id = dept.id " +
-                    "join sf_taxa taxa on dept.val = taxa.id " +
-                    $"where prod.id = '{sfProduct.Id}'");
-
-                foreach (var categoryAssociation in categoryAssociations)
-                {
-                    product.AddCategory(new Category
-                    {
-                        Name = categoryAssociation.ToString(),
-                        SortOrder = 0
-                    }, 0);
-                }
-
-                //foreach (var column in priceColumns)
-                //{
-                //    var price = row[column.ColumnName].ToNullableDecimal(_CultureInfo);
-                //    if (!price.HasValue)
-                //        continue;
-
-                //    var priceGroupPrice = new PriceGroupPrice
-                //    {
-                //        Price = price
-                //    };
-                //    priceGroupPrice.PriceGroup = new PriceGroup();
-                //    priceGroupPrice.PriceGroup.Name = column.ColumnName.Split(new[] { "_" }, 2, StringSplitOptions.RemoveEmptyEntries).Last();
-
-                //    product.PriceGroupPrices.Add(priceGroupPrice);
-                //}
+                AddProductCategoryAssociations(connection, sfProduct.Id, product);
+                AddProductPrice((decimal)sfProduct.Price, product);
 
                 //foreach (var cultureCode in descriptionCultureCodes)   // TODO Culture Codes
                 //{
@@ -93,96 +66,13 @@ namespace uCommerce.SfConnector.Transformers
                 var longDescription = sfProduct.Description_;
 
                 var desc = new ProductDescription();
-                desc.CultureCode = "en-US"; // TODO
+                desc.CultureCode = _CultureInfo.Name; // TODO
                 desc.DisplayName = displayName;
                 desc.ShortDescription = shortDescription;
                 desc.LongDescription = longDescription;
 
                 product.ProductDescriptions.Add(desc);
-                //}
-
-                //foreach (var column in fieldColumns)
-                //{
-                //    var value = row[column].ToEmptyString();
-                //    if (string.IsNullOrWhiteSpace(value))
-                //        continue;
-
-                //    // Depends on how many elements in the array its either DescriptionProperty(which is allways multilingual) or ProductProperty
-                //    var strings = column.ColumnName.Split(new[] { "_" }, StringSplitOptions.None);
-
-                //    switch (strings.Length)
-                //    {
-                //        case 2:
-                //            AddProductProperty(product, strings[1], value);
-                //            break;
-                //        case 3:
-                //            AddProductDescriptionProperty(product, strings[1], value, strings[2]);
-                //            break;
-                //        default:
-                //            throw new NotImplementedException(string.Format("Wrong format of '{0}', there should be 2 or 3 elements.", value));
-                //    }
-                //}
-
-                //foreach (var categoryColumn in categoryColumns)
-                //{
-                //    var path = row[categoryColumn.ColumnName].ToString();
-                //    if (string.IsNullOrWhiteSpace(path))
-                //        continue;
-
-                //    var parts = path.Split(new[] { CategoryPartSeperator }, StringSplitOptions.RemoveEmptyEntries);
-
-                //    Category category;
-
-                //    switch (parts.Length)
-                //    {
-                //        case 1:
-                //            category = new Category()
-                //            {
-                //                Name = parts.Last(),
-                //            };
-                //            break;
-                //        case 2:
-                //            category = new Category()
-                //            {
-                //                Name = parts.Last(),
-                //                ProductCatalog = new ProductCatalog()
-                //                {
-                //                    Name = parts.First(),
-                //                }
-                //            };
-                //            break;
-
-                //        case 3:
-                //            category = new Category()
-                //            {
-                //                Name = parts.Last(),
-                //                ProductCatalog = new ProductCatalog()
-                //                {
-                //                    Name = parts[1],
-                //                    ProductCatalogGroup = new ProductCatalogGroup()
-                //                    {
-                //                        Name = parts.First()
-                //                    }
-                //                }
-                //            };
-                //            break;
-
-                //        default:
-                //            throw new Exception(
-                //                string.Format("The parsed string: '{0}' contains {1} items, there should be between 1 and 3. In the format: '{{ProductCatalogGroup}}{2}{{ProductCatalog}}{2}{{Category}}'.",
-                //            path, parts.Length, CategoryPartSeperator));
-                //    }
-
-                //    var categoryProductRelation = new CategoryProductRelation()
-                //    {
-                //        Product = product,
-                //        Category = category,
-                //        SortOrder = 0,
-                //    };
-
-                //    product.CategoryProductRelations.Add(categoryProductRelation);
-                //}
-
+                
                 tempProducts.Add(product);
             }
 
@@ -203,6 +93,36 @@ namespace uCommerce.SfConnector.Transformers
             connection.Dispose();
 
             return finalList;
+        }
+
+        private void AddProductPrice(decimal price, Product product)
+        {
+            product.AddPriceGroupPrice(new PriceGroupPrice
+            {
+                PriceGroup = new PriceGroup()
+                {
+                    Name = DefaultPriceGroupName
+                },
+                Price = price
+            });
+        }
+
+        private static void AddProductCategoryAssociations(System.Data.IDbConnection connection, Guid productId, Product product)
+        {
+            var categoryAssociations = connection.Query<Guid>(
+                "select taxa.id from sf_ec_product prod " +
+                "join sf_ec_product_department dept on prod.id = dept.id " +
+                "join sf_taxa taxa on dept.val = taxa.id " +
+                $"where prod.id = '{productId}'");
+
+            foreach (var categoryAssociation in categoryAssociations)
+            {
+                product.AddCategory(new Category
+                {
+                    Name = categoryAssociation.ToString(),
+                    SortOrder = 0
+                }, 0);
+            }
         }
 
         private void AddProductProperty(Product product, string name, string value)

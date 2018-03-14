@@ -22,7 +22,6 @@ namespace uCommerce.SfConnector.Adapters.Receivers
         /// <returns>A list of sitefinity products</returns>
         public IEnumerable<SitefinityProduct> Receive()
         {
-            // TODO: batching mechanism
             using (var connection = SqlSessionFactory.Create(ConnectionString))
             {
                 var languageSpecificFields = GetLanguageSpecificFields(connection);

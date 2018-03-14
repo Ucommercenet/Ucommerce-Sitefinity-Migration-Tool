@@ -20,7 +20,10 @@ namespace MigrationCommandLineRunner.Operations
                 .Receive<CatalogsFromSitefinity>()
                     .WithOption(x => x.ConnectionString = sitefinityConnectionString)
                 .Transform<SfCatalogsToUcCatalogs>()
-                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultCatalogName)
+                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultUcommerceCatalogName)
+                    .WithOption(x => x.DefaultCatalogGroupName = MigrationSettings.Settings.DefaultUcommerceCatalogGroupName)
+                    .WithOption(x => x.DefaultPriceGroupName = MigrationSettings.Settings.DefaultUcommercePriceGroupName)
+                    .WithOption(x => x.DefaultCurrencyISOCode = MigrationSettings.Settings.DefaultUcommerceCurrencyISOCode)
                 .Send<ProductCatalogsToUCommerce>()
                 .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                 .ToOperation();
