@@ -16,32 +16,24 @@ namespace uCommerce.uConnector.Adapters.Senders
         public string ConnectionString { private get; set; }
         public log4net.ILog Log { private get; set; }
 
-        public void Send(IEnumerable<ProductCatalog> productCatalogs)
+        public void Send(IEnumerable<ProductCatalog> sourceCatalogs)
         {
             _session = SessionFactory.Create(ConnectionString);
 
             using (var tx = _session.BeginTransaction())
             {
-                foreach (var productCatalog in productCatalogs)
+                foreach (var sourceCatalog in sourceCatalogs)
                 {
-                    var productCatalogDef = _session.Query<ProductCatalog>()
-                        .SingleOrDefault(a => a.Name == productCatalog.Name);
-                    if (productCatalogDef != null) continue;
+                    var destCatalog = _session.Query<ProductCatalog>()
+                        .SingleOrDefault(a => a.Name == sourceCatalog.Name);
+                    if (destCatalog != null) continue;
 
-                    productCatalogDef = new ProductCatalog
-                    {
-                        Name = productCatalog.Name,
-                        ShowPricesIncludingVAT = productCatalog.ShowPricesIncludingVAT,
-                        DisplayOnWebSite = productCatalog.DisplayOnWebSite,
-                        LimitedAccess = productCatalog.LimitedAccess,
-                        Deleted = productCatalog.Deleted,
-                        SortOrder = productCatalog.SortOrder
-                    };
+                    destCatalog = sourceCatalog;
 
-                    UpdateCatalog(productCatalog, productCatalogDef);
+                    UpdateCatalog(sourceCatalog, destCatalog);
 
-                    Log.Info($"adding {productCatalog.Name} catalog");
-                    _session.SaveOrUpdate(productCatalogDef);
+                    Log.Info($"adding {sourceCatalog.Name} catalog");
+                    _session.SaveOrUpdate(destCatalog);
                 }
 
                 tx.Commit();
@@ -66,14 +58,10 @@ namespace uCommerce.uConnector.Adapters.Senders
                 return;
             }
 
-            productCatalogGroup = new ProductCatalogGroup()
-            {
-                CreateCustomersAsMembers = sourceCatalog.ProductCatalogGroup.CreateCustomersAsMembers,
-                ProductReviewsRequireApproval = sourceCatalog.ProductCatalogGroup.ProductReviewsRequireApproval,
-                Name = sourceCatalog.ProductCatalogGroup.Name,
-                Currency = UpdateCurrency(sourceCatalog.PriceGroup.Currency),
-                EmailProfile = _session.Query<EmailProfile>().SingleOrDefault(a => a.Name == sourceCatalog.ProductCatalogGroup.EmailProfile.Name)
-        };
+            productCatalogGroup = destCatalog.ProductCatalogGroup;
+            productCatalogGroup.Currency = UpdateCurrency(sourceCatalog.PriceGroup.Currency);
+            productCatalogGroup.EmailProfile = _session.Query<EmailProfile>()
+                .SingleOrDefault(a => a.Name == sourceCatalog.ProductCatalogGroup.EmailProfile.Name);
 
             destCatalog.ProductCatalogGroup = productCatalogGroup;
         }
@@ -87,16 +75,10 @@ namespace uCommerce.uConnector.Adapters.Senders
                 return;
             }
 
-            priceGroup = new PriceGroup()
-            {
-                Name = sourceCatalog.PriceGroup.Name,
-                Description = sourceCatalog.PriceGroup.Description,
-                Deleted = sourceCatalog.PriceGroup.Deleted,
-                VATRate = sourceCatalog.PriceGroup.VATRate,
-            };
+            priceGroup = sourceCatalog.PriceGroup;
+            priceGroup.Currency = UpdateCurrency(sourceCatalog.PriceGroup.Currency);
 
             destCatalog.PriceGroup = priceGroup;
-            destCatalog.PriceGroup.Currency = UpdateCurrency(sourceCatalog.PriceGroup.Currency);
         }
 
         private Currency UpdateCurrency(Currency sourceCurrency)
@@ -104,20 +86,7 @@ namespace uCommerce.uConnector.Adapters.Senders
             var currency = _session.Query<Currency>()
                 .SingleOrDefault(a => a.ISOCode == sourceCurrency.ISOCode);
 
-            if (currency != null)
-            {
-                return currency;
-            }
-
-            currency = new Currency()
-            {
-                ISOCode = sourceCurrency.ISOCode,
-                Deleted = sourceCurrency.Deleted,
-                ExchangeRate = sourceCurrency.ExchangeRate,
-                Name = sourceCurrency.Name
-            };
-
-            return currency;
+            return currency != null ? currency : sourceCurrency;
         }
     }
 }

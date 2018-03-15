@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using NHibernate;
 using NHibernate.Linq;
@@ -23,25 +22,21 @@ namespace uCommerce.uConnector.Adapters.Senders
         /// Commit new product definitions to the UCommerce database
         /// </summary>
         /// <param name="input">A list of product definitions</param>
-        public void Send(IEnumerable<ProductDefinition> productDefinitions)
+        public void Send(IEnumerable<ProductDefinition> sourceDefinitions)
         {
             _session = SessionFactory.Create(ConnectionString);
 
             using (var tx = _session.BeginTransaction())
             {
-                foreach (var tempProductDef in productDefinitions)
+                foreach (var sourceDefinition in sourceDefinitions)
                 {
-                    var productDef = _session.Query<ProductDefinition>().SingleOrDefault(a => a.Name == tempProductDef.Name);
-                    if (productDef == null) 
-                    {
-                        productDef = new ProductDefinition
-                        {
-                            Name = tempProductDef.Name
-                        };
+                    var destDefinition = _session.Query<ProductDefinition>().SingleOrDefault(a => a.Name == sourceDefinition.Name);
+                    if (destDefinition != null) continue;
 
-                        Log.Info($"adding {tempProductDef.Name} product definition");
-                        _session.SaveOrUpdate(productDef);
-                    }
+                    destDefinition = sourceDefinition;
+
+                    Log.Info($"adding {sourceDefinition.Name} product definition");
+                    _session.SaveOrUpdate(destDefinition);
                 }
                 tx.Commit();
             }

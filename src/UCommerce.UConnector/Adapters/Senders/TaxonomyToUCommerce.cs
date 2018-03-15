@@ -79,16 +79,16 @@ namespace uCommerce.uConnector.Adapters.Senders
 
         private Category PopulateCategory(Category sourceCategory)
         {
-            var category = new Category
+            var destCategory = new Category
             {
                 Name = sourceCategory.Name,
                 SortOrder = sourceCategory.SortOrder,
                 DisplayOnSite = sourceCategory.DisplayOnSite
             };
 
-            UpdateCategoryAssociations(sourceCategory, category);
+            UpdateCategoryAssociations(sourceCategory, destCategory);
 
-            return category;
+            return destCategory;
         }
 
         private void UpdateCategoryAssociations(Category sourceCategory, Category destCategory)

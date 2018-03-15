@@ -102,9 +102,6 @@
     <Compile Include="Helpers\SingleUserService.cs" />
     <Compile Include="Model\UCommerceProduct.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Transformers\DataTableToProductList.cs" />
-    <Compile Include="Transformers\ProductListToDataTable.cs" />
-    <Compile Include="Transformers\ProductToCvsString.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">
@@ -113,6 +110,9 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Transformers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

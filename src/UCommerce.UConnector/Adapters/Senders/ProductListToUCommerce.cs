@@ -16,13 +16,13 @@ namespace uCommerce.uConnector.Adapters.Senders
 	    public string ConnectionString { private get; set; }
 	    public log4net.ILog Log { private get; set; }
 
-        public void Send(IEnumerable<Product> input)
+        public void Send(IEnumerable<Product> sourceProducts)
 		{
 			_session = SessionFactory.Create(ConnectionString);
 
 			using (var tx = _session.BeginTransaction())
 			{
-				foreach (var sourceProduct in input)
+				foreach (var sourceProduct in sourceProducts)
 				{
 					var destProduct = _session.Query<Product>().SingleOrDefault(a => a.Sku == sourceProduct.Sku && a.VariantSku == null);
 					if (destProduct == null) // Create product
