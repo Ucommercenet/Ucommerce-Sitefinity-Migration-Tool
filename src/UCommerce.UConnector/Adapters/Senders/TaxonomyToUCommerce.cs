@@ -19,31 +19,36 @@ namespace uCommerce.uConnector.Adapters.Senders
         public string ConnectionString { private get; set; }
         public log4net.ILog Log { private get; set; }
 
-        public void Send(IEnumerable<Category> @from)
+        /// <summary>
+        /// Persist categories and parent/child category relationships to Ucommerce
+        /// </summary>
+        /// <param name="categories">transformed categories</param>
+        public void Send(IEnumerable<Category> categories)
         {
-            var sourceCategories = @from.ToList();
+            var newCategories = categories.ToList();
             _session = SessionFactory.Create(ConnectionString);
 
             using (var tx = _session.BeginTransaction())
             {
-                foreach (var sourceCategory in sourceCategories)
+                foreach (var category in newCategories)
                 {
-                    var destCategory = PopulateCategory(sourceCategory);
-                    Log.Info($"adding {destCategory.Name} category");
-                    _session.SaveOrUpdate(destCategory);
+                    Log.Info($"adding {category.Name} uCommerce category");
+                    _session.SaveOrUpdate(category);
                 }
 
                 tx.Commit();
             }
+
             _session.Flush();
 
             using (var tx = _session.BeginTransaction())
             {
-                CreateCategoryRelationships(sourceCategories);
-
+                CreateCategoryRelationships(newCategories);
                 tx.Commit();
+                _session.Flush();
             }
-            _session.Flush();
+
+            Log.Info("category migration done.");
         }
 
         private void CreateCategoryRelationships(List<Category> sourceCategories)
@@ -60,107 +65,22 @@ namespace uCommerce.uConnector.Adapters.Senders
             if (sourceCategory.Categories == null) return;
 
             var categorySitefinityId = sourceCategory.CategoryProperties.First(x => x.DefinitionField.Name == "SitefinityId").Value;
-            var parentCategory = _session.Query<Category>().SingleOrDefault(
+            var parentCategory = _session.Query<Category>().FirstOrDefault(
                 x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == categorySitefinityId) == 1);
 
             foreach (var tempChildCategory in sourceCategory.Categories)
             {
                 var childCategorySitefinityId = tempChildCategory.CategoryProperties.First(x => x.DefinitionField.Name == "SitefinityId").Value;
-                var childCategory = _session.Query<Category>().SingleOrDefault(
+                var childCategory = _session.Query<Category>().FirstOrDefault(
                     x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == childCategorySitefinityId) == 1);
 
                 if (parentCategory == null || childCategory == null) continue;
-
+                 
                 parentCategory.AddCategory(childCategory);
-                Log.Info($"adding {childCategory.Name} child category to {parentCategory.Name}");
+                Log.Info($"adding {childCategory.Name} uCommerce child category to {parentCategory.Name}");
+
                 _session.SaveOrUpdate(parentCategory);
             }
-        }
-
-        private Category PopulateCategory(Category sourceCategory)
-        {
-            var destCategory = new Category
-            {
-                Name = sourceCategory.Name,
-                SortOrder = sourceCategory.SortOrder,
-                DisplayOnSite = sourceCategory.DisplayOnSite
-            };
-
-            UpdateCategoryAssociations(sourceCategory, destCategory);
-
-            return destCategory;
-        }
-
-        private void UpdateCategoryAssociations(Category sourceCategory, Category destCategory)
-        {
-            // Category Descriptions
-            UpdateCategoryDescription(sourceCategory, destCategory);
-            // ProductCatalog association
-            UpdateProductCatalogAssociation(sourceCategory, destCategory);
-            // Category Definition
-            UpdateCategoryDefinition(sourceCategory, destCategory);
-            // Category Custom Properties/Definitions
-            UpdateCategoryProperties(sourceCategory, destCategory);
-        }
-
-        private void UpdateCategoryProperties(Category sourceCategory, Category destCategory)
-        {
-            foreach (var property in sourceCategory.CategoryProperties)
-            {
-                destCategory.CategoryProperties.Add(new CategoryProperty()
-                {
-                    DefinitionField = GetCategoryPropertyDefinitionField(property.DefinitionField),
-                    Value = property.Value,
-                    CultureCode = property.CultureCode,
-                    Category = destCategory
-                });
-            }
-        }
-
-        private DefinitionField GetCategoryPropertyDefinitionField(DefinitionField sourceDefinitionField)
-        {
-            var definitionField = _session.Query<DefinitionField>().FirstOrDefault(x => x.Name == sourceDefinitionField.Name);
-
-            if (definitionField != null)
-            {
-                return definitionField;
-            }
-
-            var defaultDefinition = _session.Query<Definition>().FirstOrDefault(x => x.Name == "Default Category Definition");
-            var dataType = _session.Query<DataType>().FirstOrDefault(x => x.TypeName == "ShortText");
-            definitionField =  new DefinitionField()
-            {
-                Name = sourceDefinitionField.Name,
-                Multilingual = sourceDefinitionField.Multilingual,
-                Searchable = sourceDefinitionField.Searchable,
-                BuiltIn = sourceDefinitionField.BuiltIn,
-                DefaultValue = sourceDefinitionField.DefaultValue,
-                DisplayOnSite = sourceDefinitionField.DisplayOnSite,
-                DataType = dataType,
-                Definition = defaultDefinition
-            };
-
-            _session.SaveOrUpdate(definitionField);
-
-            return definitionField;
-        }
-
-        private void UpdateCategoryDefinition(Category sourceCategory, Category destCategory)
-        {
-            destCategory.Definition = _session.Query<Definition>().SingleOrDefault(x => x.Name == sourceCategory.Definition.Name);
-        }
-
-        private void UpdateProductCatalogAssociation(Category sourceCategory, Category destCategory)
-        {
-            destCategory.ProductCatalog =  _session.Query<ProductCatalog>().SingleOrDefault(x => x.Name == sourceCategory.ProductCatalog.Name);
-        }
-
-        private void UpdateCategoryDescription(Category sourceCategory, Category destCategory)
-        {
-            var categoryDescription = sourceCategory.CategoryDescriptions.FirstOrDefault();
-            if (categoryDescription == null) return;
-
-            destCategory.AddCategoryDescription(categoryDescription);
         }
     }
 }

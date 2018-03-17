@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using Dapper;
+using timw255.Sitefinity.RestClient;
+using timw255.Sitefinity.RestClient.Model;
+using timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce.Catalog;
 using uCommerce.SfConnector.Helpers;
-using uCommerce.SfConnector.Model;
 using UConnector.Framework;
 
 namespace uCommerce.SfConnector.Adapters.Receivers
@@ -12,58 +14,51 @@ namespace uCommerce.SfConnector.Adapters.Receivers
     /// <summary>
     /// Receiver for product data
     /// </summary>
-    public class ProductListFromSitefinity : Configurable, IReceiver<IEnumerable<SitefinityProduct>>
+    public class ProductListFromSitefinity : Configurable, IReceiver<IEnumerable<ProductViewModel>>
     {
+        public string SitefinityBaseUrl { private get; set; }
+        public string SitefinityUsername { private get; set; }
+        public string SitefinityPassword { private get; set; }
         public string ConnectionString { private get; set; }
         public log4net.ILog Log { private get; set; }
 
         /// <summary>
-        /// Query all product data
+        /// Fetch product data from Sitefinity
         /// </summary>
         /// <returns>A list of sitefinity products</returns>
-        public IEnumerable<SitefinityProduct> Receive()
+        public IEnumerable<ProductViewModel> Receive()
         {
-            using (var connection = SqlSessionFactory.Create(ConnectionString))
+            using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
             {
-                var languageSpecificFields = GetLanguageSpecificFields(connection);
-                var productQuery = "select id, weight, visible, track_inventory, title_, tax_class_id, " +
-                                   "status, sku, sale_start_date, sale_price, sale_end_date, " +
-                                   "price, is_vat_taxable, is_u_s_canada_taxable, is_shippable " +
-                                   "is_active, inventory, expiration_date, description_ " +
-                                   languageSpecificFields +
-                                   ", typename from sf_ec_product prod inner join " +
-                                   "migration_types_to_products prodtypes ON " +
-                                   "prod.id = prodtypes.productid where status > 0";
+                Log.Info("fetching products from Sitefinity");
+                var productWrapper = new ProductServiceWrapper(sf);
+                var products = productWrapper.GetProducts("", "", 0, int.MaxValue, "", "", "").Items.ToList();
+                Log.Info($"{products.Count()} product returned from Sitefinity");
 
-                return connection.Query<SitefinityProduct>(productQuery);
+                Log.Info($"fetching product category associations");
+                using (var connection = SqlSessionFactory.Create(ConnectionString))
+                {
+                    foreach (var product in products)
+                    {
+                        AddCategoryAssociations(connection, product);
+                    }
+                }
+
+                return products;
             }
         }
 
-        /// <summary>
-        /// When new cultures/languages are added to Sitefinity, Sitefinity extends its schema rather than adding
-        /// rows for these values.  This method queries a list of cultures from one of the metadata tables and 
-        /// assembles a list of fields based on those cultures using Sitefinity's convention based naming scheme
-        /// </summary>
-        /// <param name="connection"></param>
-        /// <returns>Language/Culure specific Title and Description fields</returns>
-        private string GetLanguageSpecificFields(IDbConnection connection)
+        private void AddCategoryAssociations(IDbConnection connection, ProductViewModel product)
         {
-            string languages = connection.Query<string>(
-                @"select cultures from sf_schema_vrsns where module_name = 'Telerik.Sitefinity.Modules.Ecommerce.Catalog.Data.OpenAccessCatalogDataProvider'").FirstOrDefault();
+            // Strangely, product category associations do not seem to be available via the 
+            // sf wcf web api.  So, until a better way is found, we need to grab them from the database.
+            var categoryAssociations = connection.Query<Guid>(
+                "select taxa.id from sf_ec_product prod " +
+                "join sf_ec_product_department dept on prod.id = dept.id " +
+                "join sf_taxa taxa on dept.val = taxa.id " +
+                $"where prod.id = '{product.Item.Id}'");
 
-            if (string.IsNullOrEmpty(languages))
-            {
-                return string.Empty;
-            }
-
-            var languageFields = new StringBuilder();
-            foreach (var language in languages.Split(','))
-            {
-                languageFields.Append($",title_{language.Replace('-', '_')}");
-                languageFields.Append($",description_{language.Replace('-', '_')}");
-            }
-
-            return languageFields.ToString();
+            product.CategoryAssociations = categoryAssociations;
         }
     }
 }

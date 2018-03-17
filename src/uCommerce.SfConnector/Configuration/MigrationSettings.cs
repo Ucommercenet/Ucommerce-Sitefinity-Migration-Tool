@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
 
-namespace MigrationCommandLineRunner.Configuration
+namespace uCommerce.SfConnector.Configuration
 {
     public class MigrationSettings
     {
@@ -49,5 +49,24 @@ namespace MigrationCommandLineRunner.Configuration
         /// </summary>
         [ConfigurationProperty("DefaultUcommerceCurrencyISOCode", IsRequired = true)]
         public string DefaultUcommerceCurrencyISOCode => this["DefaultUcommerceCurrencyISOCode"] as string;
+
+        /// <summary>
+        /// The base url of the Sitefinity commerce instance being mirgrated
+        /// </summary>
+        [ConfigurationProperty("SitefinityBaseUrl", IsRequired = true)]
+        public string SitefinityBaseUrl => this["SitefinityBaseUrl"] as string;
+
+        /// <summary>
+        /// The admin login username for Sitefinity
+        /// </summary>
+        [ConfigurationProperty("SitefinityUsername", IsRequired = true)]
+        public string SitefinityUsername => this["SitefinityUsername"] as string;
+
+        /// <summary>
+        /// The admin login password for Sitefinity
+        /// </summary>
+        [ConfigurationProperty("SitefinityPassword", IsRequired = true)]
+        public string SitefinityPassword => this["SitefinityPassword"] as string;
+
     }
 }

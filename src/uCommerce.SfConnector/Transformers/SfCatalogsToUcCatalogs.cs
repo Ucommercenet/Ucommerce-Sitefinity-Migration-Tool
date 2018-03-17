@@ -1,5 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using NHibernate;
+using NHibernate.Linq;
 using uCommerce.SfConnector.Model;
+using uCommerce.uConnector.Helpers;
 using UCommerce.EntitiesV2;
 using UConnector.Framework;
 
@@ -7,18 +11,28 @@ namespace uCommerce.SfConnector.Transformers
 {
     public class SfCatalogsToUcCatalogs : ITransformer<IEnumerable<SitefinityCatalog>, IEnumerable<ProductCatalog>>
     {
-        public string DefaultCatalogName { private get; set; }
         public string DefaultCatalogGroupName { private get; set; }
         public string DefaultPriceGroupName { private get; set; }
         public string DefaultCurrencyISOCode { private get; set; }
+        public string ConnectionString { private get; set; }
 
-        public IEnumerable<ProductCatalog> Execute(IEnumerable<SitefinityCatalog> @from)
+        private ISession _session;
+
+        public IEnumerable<ProductCatalog> Execute(IEnumerable<SitefinityCatalog> catalogs)
         {
+            _session = SessionFactory.Create(ConnectionString);
             var ucommerceCatalogs = new List<ProductCatalog>();
 
-            foreach (var sitefinityCatalog in @from)
+            try
             {
-                ucommerceCatalogs.Add(BuildUCommerceCatalogFromSitefinityCatalog(sitefinityCatalog));
+                foreach (var sitefinityCatalog in catalogs) 
+                {
+                    ucommerceCatalogs.Add(BuildUCommerceCatalogFromSitefinityCatalog(sitefinityCatalog));
+                }
+            }
+            finally
+            {
+                _session.Close();
             }
 
             return ucommerceCatalogs;
@@ -26,28 +40,18 @@ namespace uCommerce.SfConnector.Transformers
 
         private ProductCatalog BuildUCommerceCatalogFromSitefinityCatalog(SitefinityCatalog sfCatalog)
         {
-            var uCommerceCatalog = new ProductCatalog
-            {
-                Name = DefaultCatalogName,
-                PriceGroup = new PriceGroup() 
-                {
-                    Name = DefaultPriceGroupName,
-                    Deleted = false,
-                    Currency = CreateDefaultCurrency()
-                },
-                ProductCatalogGroup = new ProductCatalogGroup() 
-                {
-                    Name = DefaultCatalogGroupName,
-                    Currency = CreateDefaultCurrency(),
-                    CreateCustomersAsMembers = true,
-                    ProductReviewsRequireApproval = true,
-                    Deleted = false,
-                    EmailProfile = new EmailProfile()
-                    {
-                        Name = "Default"
-                    }
-                },
+            var uCommerceCatalog = _session.Query<ProductCatalog>().FirstOrDefault(a => a.Name == sfCatalog.CatalogName);
 
+            if (uCommerceCatalog != null) return uCommerceCatalog;
+
+            var currency = CreateCurrency(DefaultCurrencyISOCode);
+            var priceGroup = CreatePriceGroup(DefaultPriceGroupName, currency);
+            var productCatalogGroup = CreateProductCatalogGroup(DefaultCatalogGroupName, currency);
+            uCommerceCatalog = new ProductCatalog
+            {
+                Name = sfCatalog.CatalogName,
+                PriceGroup = priceGroup,
+                ProductCatalogGroup = productCatalogGroup,
                 ShowPricesIncludingVAT = true,
                 DisplayOnWebSite = true,
                 LimitedAccess = false,
@@ -58,11 +62,49 @@ namespace uCommerce.SfConnector.Transformers
             return uCommerceCatalog;
         }
 
-        private Currency CreateDefaultCurrency()
+        private ProductCatalogGroup CreateProductCatalogGroup(string catalogGroupName, Currency currency)
         {
+            return new ProductCatalogGroup()
+            {
+                Name = catalogGroupName,
+                Currency = currency,
+                CreateCustomersAsMembers = true,
+                ProductReviewsRequireApproval = true,
+                Deleted = false,
+                EmailProfile = _session.Query<EmailProfile>()
+                    .SingleOrDefault(a => a.Name == "Default")
+            };
+        }
+
+        private PriceGroup CreatePriceGroup(string priceGroupName, Currency priceGroupCurrency)
+        {
+            var priceGroup = _session.Query<PriceGroup>().SingleOrDefault(a => a.Name == priceGroupName);
+            if (priceGroup != null)
+            {
+                return priceGroup;
+            }
+
+            return new PriceGroup()
+            {
+                Name = priceGroupName,
+                Deleted = false,
+                Currency = priceGroupCurrency
+            };
+        }
+
+        private Currency CreateCurrency(string ISOCode)
+        {
+            var currency = _session.Query<Currency>()
+                .SingleOrDefault(a => a.ISOCode == ISOCode);
+
+            if (currency != null)
+            {
+                return currency;
+            }
+
             return new Currency()
             {  
-                ISOCode = DefaultCurrencyISOCode,
+                ISOCode = ISOCode,
                 ExchangeRate = 0,
                 Deleted = false
             };

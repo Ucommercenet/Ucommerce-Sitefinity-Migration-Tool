@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
-using MigrationCommandLineRunner.Configuration;
 using MigrationCommandLineRunner.Helpers;
+using uCommerce.SfConnector.Configuration;
 using uCommerce.SfConnector.Receivers;
 using uCommerce.SfConnector.Transformers;
 using uCommerce.uConnector.Adapters.Senders;
@@ -13,19 +13,25 @@ namespace MigrationCommandLineRunner.Operations
     {
         public log4net.ILog Log { private get; set; }
 
+        /// <summary>
+        /// Fluent operation for migrating category taxonomy
+        /// </summary>
+        /// <returns>operation</returns>
         public IOperation BuildOperation()
         {
-            var sitefinityConnectionString = ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString;
             var uCommerceConnectionString = ConfigurationManager.ConnectionStrings["UCommerceConnectionString"].ConnectionString;
 
             return FluentOperationBuilder
-                .Receive<TaxonomyFromSitefinity>() 
-                    .WithOption(x => x.ConnectionString = sitefinityConnectionString)
+                .Receive<TaxonomyFromSitefinity>()
+                    .WithOption(x => x.SitefinityBaseUrl = MigrationSettings.Settings.SitefinityBaseUrl)
+                    .WithOption(x => x.SitefinityUsername = MigrationSettings.Settings.SitefinityUsername)
+                    .WithOption(x => x.SitefinityPassword = MigrationSettings.Settings.SitefinityPassword)
                     .WithOption(x => x.SitefinityDepartmentTaxonomyId= MigrationSettings.Settings.SitefinityDepartmentTaxonomyId)
                     .WithOption(x => x.Log = Log)
                 .Transform<SfTaxonomyToUcTaxonomy>()
                     .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultUcommerceCatalogName)
                     .WithOption(x => x.DefaultCategoryDefinitionName = MigrationSettings.Settings.DefaultUcommerceCategoryDefinitionName)
+                    .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                 .Send<TaxonomyToUCommerce>()
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                     .WithOption(x => x.Log = Log)

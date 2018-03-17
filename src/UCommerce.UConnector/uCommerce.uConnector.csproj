@@ -91,7 +91,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Adapters\Receivers\ProductListFromUCommerce.cs" />
     <Compile Include="Adapters\Senders\ProductCatalogsToUCommerce.cs" />
     <Compile Include="Adapters\Senders\ProductDefinitionsToUCommerce.cs" />
     <Compile Include="Adapters\Senders\ProductListToUCommerce.cs" />
@@ -100,7 +99,6 @@
     <Compile Include="Helpers\InMemoryCommerceConfigurationProvider.cs" />
     <Compile Include="Helpers\SessionFactory.cs" />
     <Compile Include="Helpers\SingleUserService.cs" />
-    <Compile Include="Model\UCommerceProduct.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -111,9 +109,7 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Transformers\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

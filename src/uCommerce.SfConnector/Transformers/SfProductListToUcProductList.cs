@@ -4,124 +4,133 @@ using System.Configuration;
 using System.Globalization;
 using System.Linq;
 using Dapper;
+using NHibernate;
+using NHibernate.Linq;
+using timw255.Sitefinity.RestClient.Model;
 using uCommerce.SfConnector.Helpers;
-using uCommerce.SfConnector.Model;
-using uCommerce.uConnector.Model;
+using uCommerce.uConnector.Helpers;
 using UCommerce.EntitiesV2;
 using UConnector.Framework;
+using Product = UCommerce.EntitiesV2.Product;
 
 namespace uCommerce.SfConnector.Transformers
 {
-    public class SfProductListToUcProductList : ITransformer<IEnumerable<SitefinityProduct>, IEnumerable<Product>>
+    public class SfProductListToUcProductList : ITransformer<IEnumerable<ProductViewModel>, IEnumerable<Product>>
     {
         public string DefaultPriceGroupName { get; set; }
-        public string DateTimeFormat { get; set; }
-        public string DecimalFormat { get; set; }
-        public string DoubleFormat { get; set; }
-
         public string CategoryPartSeperator { get; set; }
+        public string ConnectionString { private get; set; }
 
         private readonly CultureInfo _CultureInfo = new CultureInfo("en-US");
+        private ISession _session;
 
-        public SfProductListToUcProductList()
+        public IEnumerable<Product> Execute(IEnumerable<ProductViewModel> sitefinityProducts)
         {
-            CategoryPartSeperator = UCommerceProduct.Category.CATEGORY_PART_SEPERATOR;
+            _session = SessionFactory.Create(ConnectionString);
+            var connection = SqlSessionFactory.Create(ConfigurationManager
+                .ConnectionStrings["SitefinityConnectionString"].ConnectionString);
+            var products = new List<Product>();
 
-            DateTimeFormat = UCommerceProduct.DATETIME_FORMAT;
-            DecimalFormat = UCommerceProduct.DECIMAL_FORMAT;
-            DoubleFormat = UCommerceProduct.DOUBLE_FORMAT;
-        }
-
-        public IEnumerable<Product> Execute(IEnumerable<SitefinityProduct> @from)
-        {
-            var connection = SqlSessionFactory.Create(ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString);
-            var tempProducts = new List<Product>();
-
-            foreach (var sfProduct in @from)
+            try
             {
-                var product = new Product();
-                product.Sku = sfProduct.Sku;
-                product.VariantSku = "";
-                product.Name = sfProduct.Title_;
-                product.DisplayOnSite = true;
-                product.ThumbnailImageMediaId = "";
-                product.PrimaryImageMediaId = "";
-                if (sfProduct.Weight != null) product.Weight = (decimal) sfProduct.Weight;
-
-                product.ProductDefinition = new ProductDefinition()
+                foreach (var sfProduct in sitefinityProducts)
                 {
-                    Name = sfProduct.TypeName
-                };
+                    var product = _session.Query<Product>()
+                        .SingleOrDefault(a => a.Sku == sfProduct.Item.Sku && (a.VariantSku == null || a.VariantSku == string.Empty));
+                    if (product != null) continue;
 
-                product.AllowOrdering = true;
-                product.Rating = null;
+                    product = new Product();
+                    AddProduct(product, sfProduct);
 
-                AddProductCategoryAssociations(connection, sfProduct.Id, product);
-                AddProductPrice((decimal)sfProduct.Price, product);
+                    AddProductCategoryAssociations(product, sfProduct);
+                    AddProductPrices(sfProduct.Item.Price, product);
 
-                //foreach (var cultureCode in descriptionCultureCodes)   // TODO Culture Codes
-                //{
-                var displayName = sfProduct.Title_;
-                var shortDescription = sfProduct.Description_;
-                var longDescription = sfProduct.Description_;
-
-                var desc = new ProductDescription();
-                desc.CultureCode = _CultureInfo.Name; // TODO
-                desc.DisplayName = displayName;
-                desc.ShortDescription = shortDescription;
-                desc.LongDescription = longDescription;
-
-                product.ProductDescriptions.Add(desc);
-                
-                tempProducts.Add(product);
+                    products.Add(product);
+                }
             }
-
-            var finalList = new List<Product>();
-            tempProducts.Where(x => string.IsNullOrWhiteSpace(x.VariantSku)).ToList().ForEach(finalList.Add);
-            foreach (var product in tempProducts.Where(a => !string.IsNullOrWhiteSpace(a.VariantSku)))
+            finally
             {
-                var parentProduct =
-                    tempProducts.SingleOrDefault(x => x.Sku == product.Sku && string.IsNullOrWhiteSpace(x.VariantSku));
-                if (parentProduct == null)
-                    throw new Exception(string.Format("Could not find matching parent Sku '{0}' for VariantSku: '{1}'",
-                        product.Sku, product.VariantSku));
-
-                parentProduct.Variants.Add(product);
+                connection.Close();
+                connection.Dispose();
+                _session.Close();
             }
 
-            connection.Close();
-            connection.Dispose();
-
-            return finalList;
+            return products;
         }
 
-        private void AddProductPrice(decimal price, Product product)
+
+        private void AddProduct(Product product, ProductViewModel sfProduct)
         {
+            // Product
+            AddProductValueTypes(product, sfProduct);
+
+            // Product Definiton ( Multilingual and Definitions )
+            AddProductDescriptions(product, sfProduct);
+
+            // Prices
+            AddProductPrices(sfProduct.Item.Price, product);
+
+            // ProductProperties
+            // TODO
+
+            // Variants
+            // TODO
+        }
+
+        private void AddProductValueTypes(Product product, ProductViewModel sfProduct)
+        {
+            product.Sku = sfProduct.Item.Sku;
+            product.VariantSku = string.Empty;
+            product.Name = sfProduct.Item.Title;
+            product.DisplayOnSite = true;
+            product.ThumbnailImageMediaId = string.Empty;
+            product.PrimaryImageMediaId = string.Empty;
+            if (sfProduct.Item.Weight != null) product.Weight = (decimal) sfProduct.Item.Weight;
+            product.AllowOrdering = true;
+            product.Rating = null;
+            product.ProductDefinition = GetProductDefinition(sfProduct.ProductTypeTitle);
+        }
+
+        private void AddProductDescriptions(Product product, ProductViewModel sfProduct)
+        {
+            // TODO: Account for culture specific descriptions
+            var displayName = sfProduct.Item.Title;
+            var shortDescription = sfProduct.Item.Description;
+            var longDescription = sfProduct.Item.Description;
+
+            var desc = new ProductDescription
+            {
+                CultureCode = _CultureInfo.Name,
+                DisplayName = displayName,
+                ShortDescription = shortDescription,
+                LongDescription = longDescription
+            };
+
+            product.AddProductDescription(desc);
+        }
+
+        private ProductDefinition GetProductDefinition(string definitionName)
+        {
+            return _session.Query<ProductDefinition>().FirstOrDefault(x => x.Name == definitionName);
+        }
+
+        private void AddProductPrices(decimal price, Product product)
+        {
+            // TODO account for potential multiple price groups
+            var priceGroup = _session.Query<PriceGroup>().FirstOrDefault(a => a.Name == DefaultPriceGroupName);
             product.AddPriceGroupPrice(new PriceGroupPrice
             {
-                PriceGroup = new PriceGroup()
-                {
-                    Name = DefaultPriceGroupName
-                },
+                PriceGroup = priceGroup,
                 Price = price
             });
         }
 
-        private static void AddProductCategoryAssociations(System.Data.IDbConnection connection, Guid productId, Product product)
+        private void AddProductCategoryAssociations(Product product,ProductViewModel sfProduct)
         {
-            var categoryAssociations = connection.Query<Guid>(
-                "select taxa.id from sf_ec_product prod " +
-                "join sf_ec_product_department dept on prod.id = dept.id " +
-                "join sf_taxa taxa on dept.val = taxa.id " +
-                $"where prod.id = '{productId}'");
-
-            foreach (var categoryAssociation in categoryAssociations)
+            foreach (var categoryAssociation in sfProduct.CategoryAssociations)
             {
-                product.AddCategory(new Category
-                {
-                    Name = categoryAssociation.ToString(),
-                    SortOrder = 0
-                }, 0);
+                var associatedCategory = GetCategory(categoryAssociation.ToString());
+                product.AddCategory(associatedCategory, 0);
             }
         }
 
@@ -155,6 +164,12 @@ namespace uCommerce.SfConnector.Transformers
             };
 
             productDescription.ProductDescriptionProperties.Add(productProperty);
+        }
+
+        private Category GetCategory(string sitefinityId)
+        {
+            return _session.Query<Category>().SingleOrDefault(
+                x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == sitefinityId) == 1);
         }
     }
 }

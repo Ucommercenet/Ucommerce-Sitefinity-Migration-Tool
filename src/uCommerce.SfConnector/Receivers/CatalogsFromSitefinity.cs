@@ -8,18 +8,22 @@ namespace uCommerce.SfConnector.Receivers
 {
     public class CatalogsFromSitefinity : Configurable, IReceiver<IEnumerable<SitefinityCatalog>>
     {
-        public string ConnectionString { private get; set; }
+        public string DefaultCatalogName { private get; set; }
         public log4net.ILog Log { private get; set; }
 
+        /// <summary>
+        /// Fetch catalog related data from Sitefinity
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<SitefinityCatalog> Receive()
         {
-            // Stub TODO: however we extract catalogs...
+            // Stub   TODO: currently we are defaulting to a single catalog
 
             return new List<SitefinityCatalog>()
             {
                 new SitefinityCatalog()
                 {
-                    CatalogName = "New Catalog",
+                    CatalogName = DefaultCatalogName,
                 }
             };
         }

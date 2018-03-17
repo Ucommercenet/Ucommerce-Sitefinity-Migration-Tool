@@ -18,9 +18,6 @@ namespace MigrationCommandLineRunner
                 Log.Info("======== Data Migration CommandLine Runner ========");
                 var operationEngine = new OperationEngine();
 
-                Log.Info("******** Preparing Sitefinity database ****");
-                PrepareSitefinityDatabase.BuildProductToProductTypesTable();
-
                 Log.Info("******** Migrating catalogs ********");
                 var migrateCatalogs = new MigrateCatalogs {Log = Log};
                 operationEngine.Execute(migrateCatalogs.BuildOperation());

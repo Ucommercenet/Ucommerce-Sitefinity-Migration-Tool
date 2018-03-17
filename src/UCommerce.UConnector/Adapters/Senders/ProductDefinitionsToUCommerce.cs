@@ -19,28 +19,24 @@ namespace uCommerce.uConnector.Adapters.Senders
         public log4net.ILog Log { private get; set; }
 
         /// <summary>
-        /// Commit new product definitions to the UCommerce database
+        /// Persist product definitions to Ucommerce
         /// </summary>
-        /// <param name="input">A list of product definitions</param>
-        public void Send(IEnumerable<ProductDefinition> sourceDefinitions)
+        /// <param name="definitions">transformed definitions</param>
+        public void Send(IEnumerable<ProductDefinition> definitions)
         {
             _session = SessionFactory.Create(ConnectionString);
 
             using (var tx = _session.BeginTransaction())
             {
-                foreach (var sourceDefinition in sourceDefinitions)
+                foreach (var definition in definitions)
                 {
-                    var destDefinition = _session.Query<ProductDefinition>().SingleOrDefault(a => a.Name == sourceDefinition.Name);
-                    if (destDefinition != null) continue;
-
-                    destDefinition = sourceDefinition;
-
-                    Log.Info($"adding {sourceDefinition.Name} product definition");
-                    _session.SaveOrUpdate(destDefinition);
+                    Log.Info($"adding {definition.Name} Ucommerce product definition");
+                    _session.SaveOrUpdate(definition);
                 }
                 tx.Commit();
             }
             _session.Flush();
+            Log.Info("product definition migration done.");
         }
     }
 }

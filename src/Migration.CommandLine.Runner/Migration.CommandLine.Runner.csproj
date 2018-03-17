@@ -99,19 +99,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Helpers\IMigrationOperation.cs" />
-    <Compile Include="Configuration\MigrationSettings.cs" />
-    <Compile Include="Helpers\PrepareSitefinityDatabase.cs" />
-    <Compile Include="Operations\MigrateCatalogs.cs" />
-    <Compile Include="Operations\MigrateProductData.cs" />
-    <Compile Include="Operations\MigrateProductTypes.cs" />
-    <Compile Include="Operations\MigrateTaxonomy.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Components.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -127,7 +121,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="uConnector.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -139,12 +133,6 @@
       <Project>{3af0be5a-98c2-40ea-bec8-62c50501b810}</Project>
       <Name>uCommerce.uConnector</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="PrerequisiteDBScripts\MSSQL\CreateTypesToProductsMigrationData.sql">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="PrerequisiteDBScripts\MSSQL\readme.txt" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,89 +1,156 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using uCommerce.SfConnector.Model;
+using NHibernate;
+using NHibernate.Linq;
+using timw255.Sitefinity.RestClient.Model;
+using uCommerce.uConnector.Helpers;
 using UCommerce.EntitiesV2;
 using UConnector.Framework;
 
 namespace uCommerce.SfConnector.Transformers
 {
-    public class SfTaxonomyToUcTaxonomy : ITransformer<IEnumerable<SitefinityTaxonomy>, IEnumerable<Category>>
+    public class SfTaxonomyToUcTaxonomy : ITransformer<IEnumerable<WcfHierarchicalTaxon>, IEnumerable<Category>>
     {
         public string DefaultCatalogName { private get; set; }
         public string DefaultCategoryDefinitionName { private get; set; }
+        public string ConnectionString { private get; set; }
 
-        public IEnumerable<Category> Execute(IEnumerable<SitefinityTaxonomy> @from)
+        private ISession _session;
+        private readonly string SitefinityPropertyName = "SitefinityId";
+
+        public IEnumerable<Category> Execute(IEnumerable<WcfHierarchicalTaxon> departments)
         {
-            var sfCategories = @from.ToList();
-            var tempCategories = new List<Category>();
-            var currentCatalog = new ProductCatalog {Name = DefaultCatalogName};
-            var categoryDefinition = new Definition {Name = DefaultCategoryDefinitionName};
+            _session = SessionFactory.Create(ConnectionString);
+            var sfCategories = departments.ToList();
+            var categories = new List<Category>();
 
-            foreach (var sfCategory in sfCategories)
+            try
             {
-                // Base category
-                var category = new Category
+                foreach (var sfCategory in sfCategories)
                 {
-                    Name = sfCategory.Title_,
-                    ProductCatalog = currentCatalog,
-                    Definition = categoryDefinition,
-                    DisplayOnSite = true,
-                };
+                    categories.Add(BuildCategory(sfCategory));
+                }
 
-                // Category descriptions
-                category.CategoryDescriptions.Add(new CategoryDescription()
-                {
-                    CultureCode = "en-US",  // Cultures are TODO
-                    Description = sfCategory.Description,
-                    DisplayName = sfCategory.Title_,
-                    RenderAsContent = true,
-                    Category = category
-                });
-
-                category.AddCategoryProperty(new CategoryProperty()
-                {
-                    DefinitionField = GetCategoryPropertyDefinitionField("SitefinityId"),
-                    Value = sfCategory.Id.ToString()
-                });
-
-                tempCategories.Add(category);
+                BuildParentChildCategoryRelationships(categories, sfCategories);
+            }
+            finally
+            {
+                _session.Close();
             }
 
-            BuildParentChildCategoryRelationships(tempCategories, sfCategories);
-
-            return tempCategories;
+            return categories;
         }
 
-        private DefinitionField GetCategoryPropertyDefinitionField(string definitionFieldName)
+        private Category BuildCategory(WcfHierarchicalTaxon sfCategory)
         {
-            return new DefinitionField()
+            var category = _session.Query<Category>().FirstOrDefault(
+                x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityPropertyName && prop.Value == sfCategory.Id.ToString()) == 1);
+
+            if (category != null) return category;
+
+            var currentCatalog = GetCatalogAssociation(DefaultCatalogName);
+            var categoryDefinition = GetCategoryDefinition();
+            category = new Category
             {
+                Name = sfCategory.Title,
+                ProductCatalog = currentCatalog,
+                Definition = categoryDefinition,
+                DisplayOnSite = true,
+            };
+
+            UpdateCategoryAssociations(category, sfCategory);
+
+            return category;
+        }
+
+        private void UpdateCategoryAssociations(Category category, WcfHierarchicalTaxon sfCategory)
+        {
+            // Category Descriptions
+            AddCategoryDescriptions(category, sfCategory);
+
+            // Category Custom Properties/Definitions
+            AddCategoryProperties(category, sfCategory);
+        }
+
+        private void AddCategoryProperties(Category category, WcfHierarchicalTaxon sfCategory)
+        {
+            var propertyDefField = GetCategoryPropertyDefinitionField("SitefinityId");
+            category.AddCategoryProperty(new CategoryProperty()
+            {
+                DefinitionField = propertyDefField,
+                Value = sfCategory.Id.ToString(),
+                CultureCode = string.Empty,
+                Category = category
+            });
+        }
+
+        private DefinitionField GetCategoryPropertyDefinitionField(string sourceDefinitionFieldName)
+        {
+            var definitionField = _session.Query<DefinitionField>().FirstOrDefault(x => x.Name == sourceDefinitionFieldName);
+
+            if (definitionField != null)
+            {
+                return definitionField;
+            }
+
+            var defaultDefinition = _session.Query<Definition>().FirstOrDefault(x => x.Name == "Default Category Definition");
+            var dataType = _session.Query<DataType>().FirstOrDefault(x => x.TypeName == "ShortText");
+            definitionField = new DefinitionField()
+            {
+                Name = sourceDefinitionFieldName,
+                Multilingual = false,
+                Searchable = false,
                 BuiltIn = false,
                 DefaultValue = string.Empty,
                 DisplayOnSite = false,
-                Name = definitionFieldName,
-                Multilingual = false,
-                Searchable = false,
+                DataType = dataType,
+                Definition = defaultDefinition
             };
+
+            return definitionField;
         }
 
-        private void BuildParentChildCategoryRelationships(List<Category> destCategories, List<SitefinityTaxonomy> sourceCategories)
+        private void AddCategoryDescriptions(Category category, WcfHierarchicalTaxon sfCategory)
         {
-            foreach (var sourceCategory in sourceCategories)
+            // Category description(s)
+            category.CategoryDescriptions.Add(new CategoryDescription()
             {
-                BuildCategoryRelationship(destCategories, sourceCategories, sourceCategory);
+                CultureCode = "en-US",  // Culture specific are TODO
+                Description = sfCategory.Description,
+                DisplayName = sfCategory.Title,
+                RenderAsContent = true,
+                Category = category
+            });
+        }
+
+        private Definition GetCategoryDefinition()
+        {
+            return _session.Query<Definition>().SingleOrDefault(x => x.Name == DefaultCategoryDefinitionName);
+        }
+
+        private ProductCatalog GetCatalogAssociation(string catalogName)
+        {
+            return _session.Query<ProductCatalog>().FirstOrDefault(x => x.Name == catalogName);
+        }
+
+        private void BuildParentChildCategoryRelationships(List<Category> categories, List<WcfHierarchicalTaxon> sfCategories)
+        {
+            foreach (var sfCategory in sfCategories)
+            {
+                BuildCategoryRelationship(categories, sfCategories, sfCategory);
             }
         }
 
-        private void BuildCategoryRelationship(List<Category> destCategories, List<SitefinityTaxonomy> sourceCategories, SitefinityTaxonomy sourceCategory)
+        private void BuildCategoryRelationship(List<Category> category, List<WcfHierarchicalTaxon> sfCategories, WcfHierarchicalTaxon sfCategory)
         {
-            var sourceChildCategories = sourceCategories.Where(x => x.Parent_Id == sourceCategory.Id);
+            var sfChildCategories = sfCategories.Where(x => x.ParentTaxonId == sfCategory.Id);
 
-            foreach (var sourceChildCategory in sourceChildCategories)
+            foreach (var sfChildCategory in sfChildCategories)
             {
-                var destCategory = destCategories.First(
-                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == sourceCategory.Id.ToString()) == 1);
-                var destChildCategory = destCategories.First(
-                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == sourceChildCategory.Id.ToString()) == 1);
+                var destCategory = category.First(
+                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityPropertyName && prop.Value == sfCategory.Id.ToString()) == 1);
+                var destChildCategory = category.First(
+                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityPropertyName && prop.Value == sfChildCategory.Id.ToString()) == 1);
 
                 if (destCategory != null && destChildCategory != null)
                 {

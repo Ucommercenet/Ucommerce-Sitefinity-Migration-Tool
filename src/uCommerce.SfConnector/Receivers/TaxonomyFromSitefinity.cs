@@ -1,24 +1,35 @@
-﻿using System.Collections.Generic;
-using Dapper;
-using uCommerce.SfConnector.Helpers;
-using uCommerce.SfConnector.Model;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using timw255.Sitefinity.RestClient;
+using timw255.Sitefinity.RestClient.Model;
+using timw255.Sitefinity.RestClient.ServiceWrappers.Taxonomies;
 using UConnector.Framework;
 
 namespace uCommerce.SfConnector.Receivers
 {
-    public class TaxonomyFromSitefinity : Configurable, IReceiver<IEnumerable<SitefinityTaxonomy>>
+    public class TaxonomyFromSitefinity : Configurable, IReceiver<IEnumerable<WcfHierarchicalTaxon>>
     {
-        public string ConnectionString { private get; set; }
         public string SitefinityDepartmentTaxonomyId { private get; set; }
+        public string SitefinityBaseUrl { private get; set; }
+        public string SitefinityUsername { private get; set; }
+        public string SitefinityPassword { private get; set; }
         public log4net.ILog Log { private get; set; }
 
-        public IEnumerable<SitefinityTaxonomy> Receive()
+        /// <summary>
+        /// Fetch departments from Sitefinity
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<WcfHierarchicalTaxon> Receive()
         {
-            // Get all departments
-            using (var connection = SqlSessionFactory.Create(ConnectionString))
+            using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
             {
-                var taxonomyData = connection.Query<SitefinityTaxonomy>($"select * from sf_taxa where taxonomy_id = '{SitefinityDepartmentTaxonomyId}'");
-                return taxonomyData;
+                Log.Info("fetching product types from Sitefinity");
+                var categoriesWrapper = new HierarchicalTaxonServiceWrapper(sf);
+                var categories = categoriesWrapper.GetTaxa(new Guid(SitefinityDepartmentTaxonomyId), "", "", 0, 0, "", "", false, "").Items.ToList();
+                Log.Info($"{categories.Count()} departments returned from Sitefinity");
+
+                return categories;
             }
         }
     }
