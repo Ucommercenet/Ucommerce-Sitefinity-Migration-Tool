@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NHibernate;
 using NHibernate.Linq;
@@ -13,10 +14,10 @@ namespace uCommerce.uConnector.Adapters.Senders
     /// </summary>
     public class ProductDefinitionsToUCommerce : Configurable, ISender<IEnumerable<ProductDefinition>>
     {
-        private ISession _session;
-
         public string ConnectionString { private get; set; }
         public log4net.ILog Log { private get; set; }
+
+        private ISession _session;
 
         /// <summary>
         /// Persist product definitions to Ucommerce
@@ -26,6 +27,19 @@ namespace uCommerce.uConnector.Adapters.Senders
         {
             _session = SessionFactory.Create(ConnectionString);
 
+            try
+            {
+                WriteProductDefinitions(definitions);
+                Log.Info("product definition migration done.");
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal($"A fatal exception occurred trying to write product definition data to Ucommerce: \n{ex}");
+            }
+        }
+
+        private void WriteProductDefinitions(IEnumerable<ProductDefinition> definitions)
+        {
             using (var tx = _session.BeginTransaction())
             {
                 foreach (var definition in definitions)
@@ -33,10 +47,11 @@ namespace uCommerce.uConnector.Adapters.Senders
                     Log.Info($"adding {definition.Name} Ucommerce product definition");
                     _session.SaveOrUpdate(definition);
                 }
+
                 tx.Commit();
             }
+
             _session.Flush();
-            Log.Info("product definition migration done.");
         }
     }
 }

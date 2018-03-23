@@ -29,6 +29,7 @@ namespace MigrationCommandLineRunner.Operations
                     .WithOption(x => x.Log = Log)
                 .Transform<SfProductTypesToUcProductDefinitions>()
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
+                    .WithOption(x => x.Log = Log)
                 .Send<ProductDefinitionsToUCommerce>()
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                     .WithOption(x => x.Log = Log)

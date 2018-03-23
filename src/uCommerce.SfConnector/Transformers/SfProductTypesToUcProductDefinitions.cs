@@ -13,6 +13,8 @@ namespace uCommerce.SfConnector.Transformers
             IEnumerable<ProductDefinition>>
     {
         public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
+
         private ISession _session;
 
         public IEnumerable<ProductDefinition> Execute(IEnumerable<ProductTypeViewModel> sfProductTypes)
@@ -28,10 +30,13 @@ namespace uCommerce.SfConnector.Transformers
                         .FirstOrDefault(a => a.Name == sfProductType.Title);
                     if (definition != null) continue;
 
-                    productDefinitionList.Add(new ProductDefinition()
+                    var newDefinition = (new ProductDefinition()
                     {
                         Name = sfProductType.Title
                     });
+
+                    AddDefinitionFields(newDefinition, sfProductType);
+                    productDefinitionList.Add(newDefinition);
                 }
             }
             finally
@@ -40,6 +45,31 @@ namespace uCommerce.SfConnector.Transformers
             }
 
             return productDefinitionList;
+        }
+
+        private void AddDefinitionFields(ProductDefinition definition, ProductTypeViewModel sfProductType)
+        {
+            var dataType = _session.Query<DataType>().FirstOrDefault(x => x.TypeName == "ShortText");
+            if (sfProductType.ProductAttributes == null)
+            {
+                Log.Info($"No product attributes found to associate to product definition '{sfProductType.Title}'");
+                return;
+            }
+
+            foreach (var attribute in sfProductType.ProductAttributes)
+            {
+                Log.Info($"Adding attribute/definition field '{attribute.Title}' to product definition '{definition.Name}'");
+                definition.AddProductDefinitionField(new ProductDefinitionField()
+                {
+                    DisplayOnSite = attribute.Visible,
+                    Deleted = false,
+                    RenderInEditor = true,
+                    IsVariantProperty = true,
+                    SortOrder = 0,
+                    Name = attribute.Title.TrimEnd(),
+                    DataType = dataType
+                });
+            }
         }
     }
 }

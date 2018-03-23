@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using MigrationCommon.Extensions;
 using NHibernate;
-using NHibernate.Linq;
 using UCommerce.EntitiesV2;
 using uCommerce.uConnector.Helpers;
 using UConnector.Framework;
@@ -11,10 +10,10 @@ namespace uCommerce.uConnector.Adapters.Senders
 {
 	public class ProductListToUCommerce : Configurable, ISender<IEnumerable<Product>>
 	{
-		private ISession _session;
-
 	    public string ConnectionString { private get; set; }
 	    public log4net.ILog Log { private get; set; }
+
+	    private ISession _session;
 
         /// <summary>
         /// Persist products to Ucommerce
@@ -22,29 +21,33 @@ namespace uCommerce.uConnector.Adapters.Senders
         /// <param name="products">transformed products</param>
 	    public void Send(IEnumerable<Product> products)
 		{
-			_session = SessionFactory.Create(ConnectionString);
+		    _session = SessionFactory.Create(ConnectionString);
 
-			using (var tx = _session.BeginTransaction())
-			{
-			    foreach (var product in products)
-			    {
-			        Log.Info($"adding {AbridgedName(product.Name)} product");
-			        _session.SaveOrUpdate(product);
-			    }
-				tx.Commit();
-			}
-			_session.Flush();
-		    Log.Info("product migration done.");
-        }
+		    try
+            {
+		        WriteProducts(products);
+		        Log.Info("product migration done.");
+		    }
+		    catch (Exception ex)
+		    {
+		        Log.Fatal($"A fatal exception occurred trying to write product data to Ucommerce: \n{ex}");
+		    }
+		}
 
-	    private string AbridgedName(string name)
+	    private void WriteProducts(IEnumerable<Product> products)
 	    {
- 	        if (name.Length > 25)
+	        using (var tx = _session.BeginTransaction())
 	        {
-	            return name.Substring(0, 25) + "...";
+	            foreach (var product in products)
+	            {
+	                Log.Info($"adding {product.Name.ToShortName(25)} product");
+	                _session.SaveOrUpdate(product);
+	            }
+
+	            tx.Commit();
 	        }
 
-	        return name;
+	        _session.Flush();
 	    }
 	}
 }

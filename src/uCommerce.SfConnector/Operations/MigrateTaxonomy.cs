@@ -32,6 +32,7 @@ namespace MigrationCommandLineRunner.Operations
                     .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultUcommerceCatalogName)
                     .WithOption(x => x.DefaultCategoryDefinitionName = MigrationSettings.Settings.DefaultUcommerceCategoryDefinitionName)
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
+                    .WithOption(x => x.Log = Log)
                 .Send<TaxonomyToUCommerce>()
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                     .WithOption(x => x.Log = Log)

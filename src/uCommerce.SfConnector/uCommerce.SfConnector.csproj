@@ -111,6 +111,10 @@
     <Compile Include="Transformers\SfProductTypesToUcProductDefinitions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MigrationCommon\MigrationCommon.csproj">
+      <Project>{38c21511-2b12-496e-8a70-dba3b0b691a0}</Project>
+      <Name>MigrationCommon</Name>
+    </ProjectReference>
     <ProjectReference Include="..\UCommerce.UConnector\uCommerce.uConnector.csproj">
       <Project>{3af0be5a-98c2-40ea-bec8-62c50501b810}</Project>
       <Name>uCommerce.uConnector</Name>

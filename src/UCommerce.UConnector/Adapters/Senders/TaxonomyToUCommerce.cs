@@ -14,10 +14,10 @@ namespace uCommerce.uConnector.Adapters.Senders
     /// </summary>
     public class TaxonomyToUCommerce : Configurable, ISender<IEnumerable<Category>>
     {
-        private ISession _session;
-
         public string ConnectionString { private get; set; }
         public log4net.ILog Log { private get; set; }
+
+        private ISession _session;
 
         /// <summary>
         /// Persist categories and parent/child category relationships to Ucommerce
@@ -28,6 +28,29 @@ namespace uCommerce.uConnector.Adapters.Senders
             var newCategories = categories.ToList();
             _session = SessionFactory.Create(ConnectionString);
 
+            try
+            {
+                WriteCategories(newCategories);
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal($"A fatal exception occurred trying to write category data to Ucommerce: \n{ex}");
+            }
+
+            try
+            {
+                WriteCategoryRelationships(newCategories);
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal($"A fatal exception occurred trying to write product definition data to Ucommerce: \n{ex}");
+            }
+
+            Log.Info("category migration done.");
+        }
+
+        private void WriteCategories(List<Category> newCategories)
+        {
             using (var tx = _session.BeginTransaction())
             {
                 foreach (var category in newCategories)
@@ -37,25 +60,23 @@ namespace uCommerce.uConnector.Adapters.Senders
                 }
 
                 tx.Commit();
-            }
-
-            _session.Flush();
-
-            using (var tx = _session.BeginTransaction())
-            {
-                CreateCategoryRelationships(newCategories);
-                tx.Commit();
                 _session.Flush();
             }
-
-            Log.Info("category migration done.");
         }
 
-        private void CreateCategoryRelationships(List<Category> sourceCategories)
+
+        private void WriteCategoryRelationships(List<Category> sourceCategories)
         {
-            foreach (var sourceCategory in sourceCategories)
+            using (var tx = _session.BeginTransaction())
             {
-                AddCategoryChildren(sourceCategory);
+
+                foreach (var sourceCategory in sourceCategories)
+                {
+                    AddCategoryChildren(sourceCategory);
+                }
+
+                tx.Commit();
+                _session.Flush();
             }
         }
 
@@ -64,18 +85,23 @@ namespace uCommerce.uConnector.Adapters.Senders
         {
             if (sourceCategory.Categories == null) return;
 
-            var categorySitefinityId = sourceCategory.CategoryProperties.First(x => x.DefinitionField.Name == "SitefinityId").Value;
+            var categorySitefinityId = sourceCategory.CategoryProperties
+                .First(x => x.DefinitionField.Name == "SitefinityId").Value;
             var parentCategory = _session.Query<Category>().FirstOrDefault(
-                x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == categorySitefinityId) == 1);
+                x => x.CategoryProperties.Count(prop =>
+                         prop.DefinitionField.Name == "SitefinityId" && prop.Value == categorySitefinityId) == 1);
 
             foreach (var tempChildCategory in sourceCategory.Categories)
             {
-                var childCategorySitefinityId = tempChildCategory.CategoryProperties.First(x => x.DefinitionField.Name == "SitefinityId").Value;
+                var childCategorySitefinityId = tempChildCategory.CategoryProperties
+                    .First(x => x.DefinitionField.Name == "SitefinityId").Value;
                 var childCategory = _session.Query<Category>().FirstOrDefault(
-                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == "SitefinityId" && prop.Value == childCategorySitefinityId) == 1);
+                    x => x.CategoryProperties.Count(prop =>
+                             prop.DefinitionField.Name == "SitefinityId" && prop.Value == childCategorySitefinityId) ==
+                         1);
 
                 if (parentCategory == null || childCategory == null) continue;
-                 
+
                 parentCategory.AddCategory(childCategory);
                 Log.Info($"adding {childCategory.Name} uCommerce child category to {parentCategory.Name}");
 

@@ -14,9 +14,10 @@ namespace uCommerce.SfConnector.Transformers
         public string DefaultCatalogName { private get; set; }
         public string DefaultCategoryDefinitionName { private get; set; }
         public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         private ISession _session;
-        private readonly string SitefinityPropertyName = "SitefinityId";
+        private readonly string SitefinityUniqueIdPropertyName = "SitefinityId";
 
         public IEnumerable<Category> Execute(IEnumerable<WcfHierarchicalTaxon> departments)
         {
@@ -44,7 +45,7 @@ namespace uCommerce.SfConnector.Transformers
         private Category BuildCategory(WcfHierarchicalTaxon sfCategory)
         {
             var category = _session.Query<Category>().FirstOrDefault(
-                x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityPropertyName && prop.Value == sfCategory.Id.ToString()) == 1);
+                x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityUniqueIdPropertyName && prop.Value == sfCategory.Id.ToString()) == 1);
 
             if (category != null) return category;
 
@@ -148,9 +149,9 @@ namespace uCommerce.SfConnector.Transformers
             foreach (var sfChildCategory in sfChildCategories)
             {
                 var destCategory = category.First(
-                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityPropertyName && prop.Value == sfCategory.Id.ToString()) == 1);
+                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityUniqueIdPropertyName && prop.Value == sfCategory.Id.ToString()) == 1);
                 var destChildCategory = category.First(
-                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityPropertyName && prop.Value == sfChildCategory.Id.ToString()) == 1);
+                    x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityUniqueIdPropertyName && prop.Value == sfChildCategory.Id.ToString()) == 1);
 
                 if (destCategory != null && destChildCategory != null)
                 {

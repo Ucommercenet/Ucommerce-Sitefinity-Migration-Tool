@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.Linq;
-using Dapper;
 using NHibernate;
 using NHibernate.Linq;
 using timw255.Sitefinity.RestClient.Model;
@@ -20,6 +19,7 @@ namespace uCommerce.SfConnector.Transformers
         public string DefaultPriceGroupName { get; set; }
         public string CategoryPartSeperator { get; set; }
         public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         private readonly CultureInfo _CultureInfo = new CultureInfo("en-US");
         private ISession _session;
@@ -27,8 +27,7 @@ namespace uCommerce.SfConnector.Transformers
         public IEnumerable<Product> Execute(IEnumerable<ProductViewModel> sitefinityProducts)
         {
             _session = SessionFactory.Create(ConnectionString);
-            var connection = SqlSessionFactory.Create(ConfigurationManager
-                .ConnectionStrings["SitefinityConnectionString"].ConnectionString);
+            var connection = SqlSessionFactory.Create(ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString);
             var products = new List<Product>();
 
             try
@@ -37,14 +36,13 @@ namespace uCommerce.SfConnector.Transformers
                 {
                     var product = _session.Query<Product>()
                         .SingleOrDefault(a => a.Sku == sfProduct.Item.Sku && (a.VariantSku == null || a.VariantSku == string.Empty));
+
                     if (product != null) continue;
 
                     product = new Product();
+                    
                     AddProduct(product, sfProduct);
-
                     AddProductCategoryAssociations(product, sfProduct);
-                    AddProductPrices(sfProduct.Item.Price, product);
-
                     products.Add(product);
                 }
             }
@@ -68,13 +66,26 @@ namespace uCommerce.SfConnector.Transformers
             AddProductDescriptions(product, sfProduct);
 
             // Prices
-            AddProductPrices(sfProduct.Item.Price, product);
+            AddProductPrices(product, sfProduct.Item.Price);
 
-            // ProductProperties
-            // TODO
+            // Product Variants
+            AddProductVariants(product, sfProduct);
 
-            // Variants
-            // TODO
+            // Product Properties (non-variant)
+            //AddProductProperties(product, sfProduct);
+        }
+
+        private void AddProductProperties(Product product, ProductViewModel sfProduct)
+        {
+            // This does not work for variants.  Different values are meant to have different products.
+            foreach (var productProperty in sfProduct.ProductAttributeValues)
+            {
+                var attributeName = productProperty.Attribute.Title;
+                foreach (var attributeValue in productProperty.AttributeValues)
+                {
+                    AddProductProperty(product, attributeName, attributeValue.Title);
+                }
+            }
         }
 
         private void AddProductValueTypes(Product product, ProductViewModel sfProduct)
@@ -114,7 +125,7 @@ namespace uCommerce.SfConnector.Transformers
             return _session.Query<ProductDefinition>().FirstOrDefault(x => x.Name == definitionName);
         }
 
-        private void AddProductPrices(decimal price, Product product)
+        private void AddProductPrices(Product product, decimal price)
         {
             // TODO account for potential multiple price groups
             var priceGroup = _session.Query<PriceGroup>().FirstOrDefault(a => a.Name == DefaultPriceGroupName);
@@ -130,20 +141,44 @@ namespace uCommerce.SfConnector.Transformers
             foreach (var categoryAssociation in sfProduct.CategoryAssociations)
             {
                 var associatedCategory = GetCategory(categoryAssociation.ToString());
+
+                if (associatedCategory == null)
+                {
+                    Log.Error($"Could not add product sku {product.Sku} to category.  Category not found.");
+                    continue;
+                }
+
                 product.AddCategory(associatedCategory, 0);
             }
         }
 
         private void AddProductProperty(Product product, string name, string value)
         {
-            var field = new ProductDefinitionField();
-            field.Name = name;
-            field.Multilingual = false;
 
-            var productProperty = new ProductProperty();
-            productProperty.Value = value;
-            productProperty.ProductDefinitionField = field;
-            product.ProductProperties.Add(productProperty);
+            var productDefinitionField = _session.Query<ProductDefinitionField>().FirstOrDefault(x => x.Name == name
+                             && x.ProductDefinition.ProductDefinitionId == product.ProductDefinition.Id);
+
+            if (productDefinitionField == null)
+            {
+                Log.Error($"Could not add product property value '{value}' for sku '{product.Sku}'.  Product definition field with name '{name}' not found.");
+                return;
+            }
+
+            var currentProductProperty = product.GetProperties().Cast<ProductProperty>()
+                .SingleOrDefault(x => x.ProductDefinitionField.Name == name);
+            if (currentProductProperty != null)
+            {
+                currentProductProperty.Value = value;
+                return;
+            }
+
+            currentProductProperty = new ProductProperty
+            {
+                Value = value,
+                ProductDefinitionField = productDefinitionField,
+                Product = product
+            };
+            product.AddProductProperty(currentProductProperty);
         }
 
         private void AddProductDescriptionProperty(Product product, string name, string value, string cultureCode)
@@ -164,6 +199,62 @@ namespace uCommerce.SfConnector.Transformers
             };
 
             productDescription.ProductDescriptionProperties.Add(productProperty);
+        }
+
+        private void AddProductVariants(Product product, ProductViewModel sfProduct)
+        {
+            if (sfProduct.VariationCount == 0) return;
+
+            foreach (var sfVariant in sfProduct.ProductVariations)
+            {  
+                // Create the variant product
+                var variantProduct = new Product
+                { 
+                    Sku = product.Sku,    // parent sku
+                    Name = "",  // ?? Variant name
+                    VariantSku = sfVariant.Sku,
+                    ProductDefinition = product.ProductDefinition,
+                    PriceGroupPrices = { }, // ?? TODO pricing
+                    DisplayOnSite    = true,
+                    ParentProduct = product
+                };
+
+                AddVariantProperties(product, sfVariant, variantProduct);
+
+                product.AddVariant(variantProduct);
+            }
+        }
+
+        private void AddVariantProperties(Product product, ProductVariation sfVariant, Product variantProduct)
+        {
+            var variantFieldNames = sfVariant.VariantNames.Attribute.Split(',');
+            var variantValues = sfVariant.VariantNames.AttributeValue.Split(',');
+
+            // Create the unique property values that make up the variant
+            for (var i = 0; i < variantFieldNames.Length; i++)
+            {
+                var variantFieldName = variantFieldNames[i].Trim();
+                var variantValue = variantValues[i].Trim();
+
+                var productDefinitionField = _session.Query<ProductDefinitionField>().FirstOrDefault(x => x.Name == variantFieldName
+                    && x.ProductDefinition.ProductDefinitionId == product.ProductDefinition.Id);
+
+                if (productDefinitionField == null)
+                {
+                    Log.Error(
+                        $"Could not add product variant for sku '{product.Sku}'.  Product definition field with name '{variantFieldName}' not found.");
+                    continue;
+                }
+
+                var productProperty = new ProductProperty()
+                {
+                    ProductDefinitionField = productDefinitionField,
+                    Value = variantValue,
+                    Product = variantProduct
+                };
+
+                variantProduct.AddProductProperty(productProperty);
+            }
         }
 
         private Category GetCategory(string sitefinityId)

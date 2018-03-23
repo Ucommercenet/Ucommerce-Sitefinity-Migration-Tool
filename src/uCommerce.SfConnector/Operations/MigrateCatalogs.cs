@@ -30,6 +30,7 @@ namespace MigrationCommandLineRunner.Operations
                     .WithOption(x => x.DefaultPriceGroupName = MigrationSettings.Settings.DefaultUcommercePriceGroupName)
                     .WithOption(x => x.DefaultCurrencyISOCode = MigrationSettings.Settings.DefaultUcommerceCurrencyISOCode)
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
+                    .WithOption(x => x.Log = Log)
                 .Send<ProductCatalogsToUCommerce>()
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                     .WithOption(x => x.Log = Log)

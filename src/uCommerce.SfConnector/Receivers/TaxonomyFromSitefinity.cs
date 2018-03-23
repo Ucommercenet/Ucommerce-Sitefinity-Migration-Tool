@@ -22,15 +22,25 @@ namespace uCommerce.SfConnector.Receivers
         /// <returns></returns>
         public IEnumerable<WcfHierarchicalTaxon> Receive()
         {
-            using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
+            var categories = new List<WcfHierarchicalTaxon>();
+            try
             {
-                Log.Info("fetching product types from Sitefinity");
-                var categoriesWrapper = new HierarchicalTaxonServiceWrapper(sf);
-                var categories = categoriesWrapper.GetTaxa(new Guid(SitefinityDepartmentTaxonomyId), "", "", 0, 0, "", "", false, "").Items.ToList();
-                Log.Info($"{categories.Count()} departments returned from Sitefinity");
-
-                return categories;
+                using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
+                {
+                    Log.Info("fetching product types from Sitefinity");
+                    var categoriesWrapper = new HierarchicalTaxonServiceWrapper(sf);
+                    categories = categoriesWrapper
+                        .GetTaxa(new Guid(SitefinityDepartmentTaxonomyId), "", "", 0, 0, "", "", false, "").Items
+                        .ToList();
+                    Log.Info($"{categories.Count()} departments returned from Sitefinity");
+                }
             }
+            catch (Exception ex)
+            {
+                Log.Fatal($"A fatal exception occurred trying to fetch department data from Sitefinity: \n{ex}");
+            }
+
+            return categories;
         }
     }
 }

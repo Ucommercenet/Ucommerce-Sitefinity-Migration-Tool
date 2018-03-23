@@ -15,6 +15,7 @@ namespace uCommerce.SfConnector.Transformers
         public string DefaultPriceGroupName { private get; set; }
         public string DefaultCurrencyISOCode { private get; set; }
         public string ConnectionString { private get; set; }
+        public log4net.ILog Log { private get; set; }
 
         private ISession _session;
 
@@ -42,7 +43,11 @@ namespace uCommerce.SfConnector.Transformers
         {
             var uCommerceCatalog = _session.Query<ProductCatalog>().FirstOrDefault(a => a.Name == sfCatalog.CatalogName);
 
-            if (uCommerceCatalog != null) return uCommerceCatalog;
+            if (uCommerceCatalog != null)
+            {
+                Log.Warn($"Catalog name {sfCatalog.CatalogName} already present in UCommerce");
+                return uCommerceCatalog;
+            }
 
             var currency = CreateCurrency(DefaultCurrencyISOCode);
             var priceGroup = CreatePriceGroup(DefaultPriceGroupName, currency);

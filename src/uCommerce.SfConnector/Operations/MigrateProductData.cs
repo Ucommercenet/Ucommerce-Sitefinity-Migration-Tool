@@ -31,6 +31,7 @@ namespace MigrationCommandLineRunner.Operations
                     .WithOption(x => x.Log = Log)
                 .Transform<SfProductListToUcProductList>()
                     .WithOption(x => x.DefaultPriceGroupName = MigrationSettings.Settings.DefaultUcommercePriceGroupName)
+                    .WithOption(x => x.Log = Log)
                 .Send<ProductListToUCommerce>()
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                     .WithOption(x => x.Log = Log)

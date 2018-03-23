@@ -109,7 +109,12 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\MigrationCommon\MigrationCommon.csproj">
+      <Project>{38c21511-2b12-496e-8a70-dba3b0b691a0}</Project>
+      <Name>MigrationCommon</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

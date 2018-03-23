@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using timw255.Sitefinity.RestClient;
 using timw255.Sitefinity.RestClient.Model;
@@ -20,14 +21,37 @@ namespace uCommerce.SfConnector.Adapters.Receivers
         /// <returns></returns>
         public IEnumerable<ProductTypeViewModel> Receive()
         {
-            using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
-            {
-                Log.Info("fetching product types from Sitefinity");
-                var productTypeWrapper = new ProductTypeServiceWrapper(sf);
-                var productTypes = productTypeWrapper.GetProductTypes("", "", 0, int.MaxValue, "").Items.ToList();
-                Log.Info($"{productTypes.Count()} product types returned from Sitefinity");
+            var productTypes = new List<ProductTypeViewModel>();
 
-                return productTypes;
+            try
+            {
+                using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
+                {
+                    Log.Info("fetching product types and properties from Sitefinity");
+                    var productTypeWrapper = new ProductTypeServiceWrapper(sf);
+                    productTypes = productTypeWrapper.GetProductTypes("", "", 0, int.MaxValue, "").Items.ToList();
+                    Log.Info($"{productTypes.Count()} product types returned from Sitefinity");
+
+                    GetProductProperties(productTypes, sf);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal($"A fatal exception occurred trying to fetch product type data from Sitefinity: \n{ex}");
+            }
+
+            return productTypes;
+        }
+
+        private static void GetProductProperties(IEnumerable<ProductTypeViewModel> productTypes, SitefinityRestClient sf)
+        {
+            var attribs = new ProductAttributeServiceWrapper(sf);
+            var prodAttribs = attribs.GetProductAttributes("", "", 0, int.MaxValue, "");
+
+            foreach (var productType in productTypes)
+            {
+                var attributes = prodAttribs.Items.Where(x => x.AppliedToJson.Contains(productType.Id.ToString())).ToList();
+                if (attributes.Count > 0) productType.ProductAttributes = attributes;
             }
         }
     }
