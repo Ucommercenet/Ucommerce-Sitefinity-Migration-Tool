@@ -29,6 +29,9 @@ namespace uCommerce.SfConnector.Transformers
             {
                 foreach (var sfCategory in sfCategories)
                 {
+                    var category = BuildCategory(sfCategory);
+                    if (category == null) continue;
+
                     categories.Add(BuildCategory(sfCategory));
                 }
 
@@ -47,7 +50,11 @@ namespace uCommerce.SfConnector.Transformers
             var category = _session.Query<Category>().FirstOrDefault(
                 x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityUniqueIdPropertyName && prop.Value == sfCategory.Id.ToString()) == 1);
 
-            if (category != null) return category;
+            if (category != null)
+            {
+                Log.Warn($"category '{sfCategory.Name}' with Sitefinity id '{sfCategory.Id}' already exists in Ucommerce");
+                return null;
+            }
 
             var currentCatalog = GetCatalogAssociation(DefaultCatalogName);
             var categoryDefinition = GetCategoryDefinition();
@@ -148,9 +155,9 @@ namespace uCommerce.SfConnector.Transformers
 
             foreach (var sfChildCategory in sfChildCategories)
             {
-                var destCategory = category.First(
+                var destCategory = category.FirstOrDefault(
                     x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityUniqueIdPropertyName && prop.Value == sfCategory.Id.ToString()) == 1);
-                var destChildCategory = category.First(
+                var destChildCategory = category.FirstOrDefault(
                     x => x.CategoryProperties.Count(prop => prop.DefinitionField.Name == SitefinityUniqueIdPropertyName && prop.Value == sfChildCategory.Id.ToString()) == 1);
 
                 if (destCategory != null && destChildCategory != null)

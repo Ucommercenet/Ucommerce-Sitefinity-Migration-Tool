@@ -55,7 +55,7 @@ namespace uCommerce.uConnector.Adapters.Senders
             {
                 foreach (var category in newCategories)
                 {
-                    Log.Info($"adding {category.Name} uCommerce category");
+                    Log.Info($"adding {category.Name} Ucommerce category");
                     _session.SaveOrUpdate(category);
                 }
 
@@ -64,12 +64,10 @@ namespace uCommerce.uConnector.Adapters.Senders
             }
         }
 
-
         private void WriteCategoryRelationships(List<Category> sourceCategories)
         {
             using (var tx = _session.BeginTransaction())
             {
-
                 foreach (var sourceCategory in sourceCategories)
                 {
                     AddCategoryChildren(sourceCategory);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.Linq;
+using MigrationCommon.Extensions;
 using NHibernate;
 using NHibernate.Linq;
 using timw255.Sitefinity.RestClient.Model;
@@ -23,10 +24,13 @@ namespace uCommerce.SfConnector.Transformers
 
         private readonly CultureInfo _CultureInfo = new CultureInfo("en-US");
         private ISession _session;
+        private PriceGroup _defaultPriceGroup;
 
         public IEnumerable<Product> Execute(IEnumerable<ProductViewModel> sitefinityProducts)
         {
             _session = SessionFactory.Create(ConnectionString);
+            _defaultPriceGroup = _session.Query<PriceGroup>().First(a => a.Name == DefaultPriceGroupName);
+
             var connection = SqlSessionFactory.Create(ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString);
             var products = new List<Product>();
 
@@ -37,7 +41,11 @@ namespace uCommerce.SfConnector.Transformers
                     var product = _session.Query<Product>()
                         .SingleOrDefault(a => a.Sku == sfProduct.Item.Sku && (a.VariantSku == null || a.VariantSku == string.Empty));
 
-                    if (product != null) continue;
+                    if (product != null)
+                    {
+                        Log.Warn($"product {product.Name.ToShortName(25)} with sku {sfProduct.Item.Sku} already exists in Ucommerce");
+                        continue;
+                    }
 
                     product = new Product();
                     
@@ -56,7 +64,6 @@ namespace uCommerce.SfConnector.Transformers
             return products;
         }
 
-
         private void AddProduct(Product product, ProductViewModel sfProduct)
         {
             // Product
@@ -70,22 +77,6 @@ namespace uCommerce.SfConnector.Transformers
 
             // Product Variants
             AddProductVariants(product, sfProduct);
-
-            // Product Properties (non-variant)
-            //AddProductProperties(product, sfProduct);
-        }
-
-        private void AddProductProperties(Product product, ProductViewModel sfProduct)
-        {
-            // This does not work for variants.  Different values are meant to have different products.
-            foreach (var productProperty in sfProduct.ProductAttributeValues)
-            {
-                var attributeName = productProperty.Attribute.Title;
-                foreach (var attributeValue in productProperty.AttributeValues)
-                {
-                    AddProductProperty(product, attributeName, attributeValue.Title);
-                }
-            }
         }
 
         private void AddProductValueTypes(Product product, ProductViewModel sfProduct)
@@ -128,10 +119,9 @@ namespace uCommerce.SfConnector.Transformers
         private void AddProductPrices(Product product, decimal price)
         {
             // TODO account for potential multiple price groups
-            var priceGroup = _session.Query<PriceGroup>().FirstOrDefault(a => a.Name == DefaultPriceGroupName);
             product.AddPriceGroupPrice(new PriceGroupPrice
             {
-                PriceGroup = priceGroup,
+                PriceGroup = _defaultPriceGroup,
                 Price = price
             });
         }
@@ -210,16 +200,20 @@ namespace uCommerce.SfConnector.Transformers
                 // Create the variant product
                 var variantProduct = new Product
                 { 
-                    Sku = product.Sku,    // parent sku
-                    Name = "",  // ?? Variant name
+                    Sku = product.Sku,   
+                    Name = sfVariant.DeltaPriceDisplay,  
                     VariantSku = sfVariant.Sku,
                     ProductDefinition = product.ProductDefinition,
-                    PriceGroupPrices = { }, // ?? TODO pricing
                     DisplayOnSite    = true,
                     ParentProduct = product
                 };
 
                 AddVariantProperties(product, sfVariant, variantProduct);
+
+                // To determine variant price, add variant additional price to parent price
+                var parentPrice = product.PriceGroupPrices.First(p => p.PriceGroup.Name == DefaultPriceGroupName).Price ?? 0;
+                var variantPrice = parentPrice + sfVariant.AdditionalPrice;
+                AddProductPrices(variantProduct, variantPrice);
 
                 product.AddVariant(variantProduct);
             }
