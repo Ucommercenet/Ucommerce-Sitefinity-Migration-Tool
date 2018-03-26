@@ -17,21 +17,24 @@ namespace uCommerce.SfConnector.Transformers
 {
     public class SfProductListToUcProductList : ITransformer<IEnumerable<ProductViewModel>, IEnumerable<Product>>
     {
-        public string DefaultPriceGroupName { get; set; }
         public string CategoryPartSeperator { get; set; }
         public string ConnectionString { private get; set; }
+        public string SitefinitySiteName { private get; set; }
         public log4net.ILog Log { private get; set; }
 
-        private readonly CultureInfo _CultureInfo = new CultureInfo("en-US");
+        private readonly CultureInfo _cultureInfo = new CultureInfo("en-US");
         private ISession _session;
         private PriceGroup _defaultPriceGroup;
 
         public IEnumerable<Product> Execute(IEnumerable<ProductViewModel> sitefinityProducts)
         {
             _session = SessionFactory.Create(ConnectionString);
-            _defaultPriceGroup = _session.Query<PriceGroup>().First(a => a.Name == DefaultPriceGroupName);
 
             var connection = SqlSessionFactory.Create(ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString);
+
+            var catalog = _session.Query<ProductCatalog>().First(x => x.Name == SitefinitySiteName);
+            _defaultPriceGroup = catalog.PriceGroup;
+
             var products = new List<Product>();
 
             try
@@ -48,7 +51,7 @@ namespace uCommerce.SfConnector.Transformers
                     }
 
                     product = new Product();
-                    
+
                     AddProduct(product, sfProduct);
                     AddProductCategoryAssociations(product, sfProduct);
                     products.Add(product);
@@ -102,7 +105,7 @@ namespace uCommerce.SfConnector.Transformers
 
             var desc = new ProductDescription
             {
-                CultureCode = _CultureInfo.Name,
+                CultureCode = _cultureInfo.Name,
                 DisplayName = displayName,
                 ShortDescription = shortDescription,
                 LongDescription = longDescription
@@ -118,7 +121,6 @@ namespace uCommerce.SfConnector.Transformers
 
         private void AddProductPrices(Product product, decimal price)
         {
-            // TODO account for potential multiple price groups
             product.AddPriceGroupPrice(new PriceGroupPrice
             {
                 PriceGroup = _defaultPriceGroup,
@@ -211,7 +213,7 @@ namespace uCommerce.SfConnector.Transformers
                 AddVariantProperties(product, sfVariant, variantProduct);
 
                 // To determine variant price, add variant additional price to parent price
-                var parentPrice = product.PriceGroupPrices.First(p => p.PriceGroup.Name == DefaultPriceGroupName).Price ?? 0;
+                var parentPrice = product.PriceGroupPrices.First(p => p.PriceGroup.Name == _defaultPriceGroup.Name).Price ?? 0;
                 var variantPrice = parentPrice + sfVariant.AdditionalPrice;
                 AddProductPrices(variantProduct, variantPrice);
 

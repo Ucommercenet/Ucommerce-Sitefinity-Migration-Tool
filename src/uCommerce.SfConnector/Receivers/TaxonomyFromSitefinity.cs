@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MigrationCommon.Exceptions;
 using timw255.Sitefinity.RestClient;
 using timw255.Sitefinity.RestClient.Model;
 using timw255.Sitefinity.RestClient.ServiceWrappers.Taxonomies;
@@ -38,6 +39,7 @@ namespace uCommerce.SfConnector.Receivers
             catch (Exception ex)
             {
                 Log.Fatal($"A fatal exception occurred trying to fetch department data from Sitefinity: \n{ex}");
+                throw new MigrationException("A fatal exception occurred trying to fetch department data from Sitefinity", ex);
             }
 
             return categories;

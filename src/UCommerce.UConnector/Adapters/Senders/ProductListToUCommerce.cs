@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MigrationCommon.Exceptions;
 using MigrationCommon.Extensions;
 using NHibernate;
 using UCommerce.EntitiesV2;
@@ -31,6 +32,7 @@ namespace uCommerce.uConnector.Adapters.Senders
 		    catch (Exception ex)
 		    {
 		        Log.Fatal($"A fatal exception occurred trying to write product data to Ucommerce: \n{ex}");
+                throw new MigrationException("A fatal exception occurred trying to write product data to Ucommerce", ex);
 		    }
 		}
 

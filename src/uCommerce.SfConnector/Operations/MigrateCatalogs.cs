@@ -7,7 +7,7 @@ using uCommerce.uConnector.Adapters.Senders;
 using UConnector;
 using UConnector.Api.V1;
 
-namespace MigrationCommandLineRunner.Operations
+namespace uCommerce.SfConnector.Operations
 {
     public class MigrateCatalogs : IMigrationOperation
     {
@@ -20,15 +20,18 @@ namespace MigrationCommandLineRunner.Operations
         public IOperation BuildOperation()
         {
             var uCommerceConnectionString = ConfigurationManager.ConnectionStrings["UCommerceConnectionString"].ConnectionString;
+            var sitefinityConnectionString = ConfigurationManager.ConnectionStrings["SitefinityConnectionString"].ConnectionString;
 
             return FluentOperationBuilder
                 .Receive<CatalogsFromSitefinity>()
-                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultUcommerceCatalogName)
+                    .WithOption(x => x.SitefinitySiteName = MigrationSettings.Settings.SitefinitySiteName)
+                    .WithOption(x => x.SitefinityConnectionString = sitefinityConnectionString)
+                    .WithOption(x => x.SitefinityBaseUrl = MigrationSettings.Settings.SitefinityBaseUrl)
+                    .WithOption(x => x.SitefinityUsername = MigrationSettings.Settings.SitefinityUsername)
+                    .WithOption(x => x.SitefinityPassword = MigrationSettings.Settings.SitefinityPassword)
                     .WithOption(x => x.Log = Log)
                 .Transform<SfCatalogsToUcCatalogs>()
                     .WithOption(x => x.DefaultCatalogGroupName = MigrationSettings.Settings.DefaultUcommerceCatalogGroupName)
-                    .WithOption(x => x.DefaultPriceGroupName = MigrationSettings.Settings.DefaultUcommercePriceGroupName)
-                    .WithOption(x => x.DefaultCurrencyISOCode = MigrationSettings.Settings.DefaultUcommerceCurrencyISOCode)
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                     .WithOption(x => x.Log = Log)
                 .Send<ProductCatalogsToUCommerce>()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MigrationCommon.Exceptions;
 using NHibernate;
 using NHibernate.Linq;
 using uCommerce.uConnector.Helpers;
@@ -35,6 +36,7 @@ namespace uCommerce.uConnector.Adapters.Senders
             catch (Exception ex)
             {
                 Log.Fatal($"A fatal exception occurred trying to write category data to Ucommerce: \n{ex}");
+                throw new MigrationException("A fatal exception occurred trying to write category data to Ucommerce", ex);
             }
 
             try
@@ -44,6 +46,7 @@ namespace uCommerce.uConnector.Adapters.Senders
             catch (Exception ex)
             {
                 Log.Fatal($"A fatal exception occurred trying to write product definition data to Ucommerce: \n{ex}");
+                throw new MigrationException("A fatal exception occurred trying to write category data to Ucommerce", ex);
             }
 
             Log.Info("category migration done.");

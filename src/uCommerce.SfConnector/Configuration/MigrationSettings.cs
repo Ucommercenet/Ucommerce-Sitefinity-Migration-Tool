@@ -21,12 +21,6 @@ namespace uCommerce.SfConnector.Configuration
         public string DefaultUcommerceCatalogGroupName => this["DefaultUcommerceCatalogGroupName"] as string;
 
         /// <summary>
-        /// The default uCommerce catalog name to be created that will also house the taxonomy
-        /// </summary>
-        [ConfigurationProperty("DefaultUcommerceCatalogName", IsRequired = true)]
-        public string DefaultUcommerceCatalogName => this["DefaultUcommerceCatalogName"] as string;
-
-        /// <summary>
         /// The default uCommerce definition name to use for migrated categories
         /// </summary>
         [ConfigurationProperty("DefaultUcommerceCategoryDefinitionName", IsRequired = true)]
@@ -39,17 +33,11 @@ namespace uCommerce.SfConnector.Configuration
         public string SitefinityDepartmentTaxonomyId => this["SitefinityDepartmentTaxonomyId"] as string;
 
         /// <summary>
-        /// The default taxonomy id that departments are associated to in Sitefinity
+        /// The name (as it appears in Sitefinity) of the Sitefinity site that will be migrated
         /// </summary>
-        [ConfigurationProperty("DefaultUcommercePriceGroupName", IsRequired = true)]
-        public string DefaultUcommercePriceGroupName => this["DefaultUcommercePriceGroupName"] as string;
-
-        /// <summary>
-        /// The default taxonomy id that departments are associated to in Sitefinity
-        /// </summary>
-        [ConfigurationProperty("DefaultUcommerceCurrencyISOCode", IsRequired = true)]
-        public string DefaultUcommerceCurrencyISOCode => this["DefaultUcommerceCurrencyISOCode"] as string;
-
+        [ConfigurationProperty("SitefinitySiteName", IsRequired = true)]
+        public string SitefinitySiteName => this["SitefinitySiteName"] as string;
+        
         /// <summary>
         /// The base url of the Sitefinity commerce instance being mirgrated
         /// </summary>

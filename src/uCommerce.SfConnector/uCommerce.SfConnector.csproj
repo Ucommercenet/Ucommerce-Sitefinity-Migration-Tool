@@ -93,8 +93,7 @@
   <ItemGroup>
     <Compile Include="Configuration\MigrationSettings.cs" />
     <Compile Include="Helpers\IMigrationOperation.cs" />
-    <Compile Include="Helpers\PrepareSitefinityDatabase.cs" />
-    <Compile Include="Model\SitefinityCatalog.cs" />
+    <Compile Include="Model\SitefinityCatalogCurrencyCulture.cs" />
     <Compile Include="Operations\MigrateCatalogs.cs" />
     <Compile Include="Operations\MigrateProductData.cs" />
     <Compile Include="Operations\MigrateProductTypes.cs" />

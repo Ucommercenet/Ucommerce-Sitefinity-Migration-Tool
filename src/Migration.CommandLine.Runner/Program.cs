@@ -1,5 +1,5 @@
 ﻿using System;
-using MigrationCommandLineRunner.Operations;
+using uCommerce.SfConnector.Operations;
 using UConnector;
 
 namespace MigrationCommandLineRunner
@@ -10,30 +10,30 @@ namespace MigrationCommandLineRunner
         /// <summary>
         /// Command line runner entry point
         /// </summary>
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             try
             {
-                Log.Info("======== Data Migration CommandLine Runner ========");
+                Log.Info("================== Data Migration CommandLine Runner ==================");
                 var operationEngine = new OperationEngine();
 
-                Log.Info("******** Migrating catalogs ********");
+                Log.Info("******** Migrating catalog, culture, currency definitions ********");
                 var migrateCatalogs = new MigrateCatalogs {Log = Log};
                 operationEngine.Execute(migrateCatalogs.BuildOperation());
 
                 Log.Info("******** Migrating taxonomy ********");
-                var migrateTaxonomy = new MigrateTaxonomy() {Log = Log};
+                var migrateTaxonomy = new MigrateTaxonomy() { Log = Log };
                 operationEngine.Execute(migrateTaxonomy.BuildOperation());
 
                 Log.Info("******** Migrating product types ********");
-                var migrateProductTypes = new MigrateProductTypes {Log = Log};
+                var migrateProductTypes = new MigrateProductTypes { Log = Log };
                 operationEngine.Execute(migrateProductTypes.BuildOperation());
 
                 Log.Info("******** Migrating core product data ********");
-                var migrateProductData = new MigrateProductData {Log = Log};
+                var migrateProductData = new MigrateProductData { Log = Log };
                 operationEngine.Execute(migrateProductData.BuildOperation());
 
-                Log.Info("========= Data Migration Complete =========");
+                Log.Info("======================= Data Migration Complete =======================");
                 Console.Read();
             }
             catch (Exception ex)

@@ -7,7 +7,7 @@ using uCommerce.uConnector.Adapters.Senders;
 using UConnector;
 using UConnector.Api.V1;
 
-namespace MigrationCommandLineRunner.Operations
+namespace uCommerce.SfConnector.Operations
 {
     public class MigrateTaxonomy : IMigrationOperation
     {
@@ -29,7 +29,7 @@ namespace MigrationCommandLineRunner.Operations
                     .WithOption(x => x.SitefinityDepartmentTaxonomyId= MigrationSettings.Settings.SitefinityDepartmentTaxonomyId)
                     .WithOption(x => x.Log = Log)
                 .Transform<SfTaxonomyToUcTaxonomy>()
-                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.DefaultUcommerceCatalogName)
+                    .WithOption(x => x.DefaultCatalogName = MigrationSettings.Settings.SitefinitySiteName)
                     .WithOption(x => x.DefaultCategoryDefinitionName = MigrationSettings.Settings.DefaultUcommerceCategoryDefinitionName)
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)
                     .WithOption(x => x.Log = Log)

@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using NHibernate;
 using NHibernate.Linq;
+using timw255.Sitefinity.RestClient.Model;
 using uCommerce.SfConnector.Model;
 using uCommerce.uConnector.Helpers;
 using UCommerce.EntitiesV2;
@@ -9,109 +9,116 @@ using UConnector.Framework;
 
 namespace uCommerce.SfConnector.Transformers
 {
-    public class SfCatalogsToUcCatalogs : ITransformer<IEnumerable<SitefinityCatalog>, IEnumerable<ProductCatalog>>
+    public class SfCatalogsToUcCatalogs : ITransformer<SitefinityCatalogCurrencyCulture, ProductCatalog>
     {
         public string DefaultCatalogGroupName { private get; set; }
-        public string DefaultPriceGroupName { private get; set; }
-        public string DefaultCurrencyISOCode { private get; set; }
         public string ConnectionString { private get; set; }
         public log4net.ILog Log { private get; set; }
 
         private ISession _session;
 
-        public IEnumerable<ProductCatalog> Execute(IEnumerable<SitefinityCatalog> catalogs)
+        public ProductCatalog Execute(SitefinityCatalogCurrencyCulture catalog)
         {
             _session = SessionFactory.Create(ConnectionString);
-            var ucommerceCatalogs = new List<ProductCatalog>();
 
             try
             {
-                foreach (var sitefinityCatalog in catalogs) 
-                {
-                    ucommerceCatalogs.Add(BuildUCommerceCatalogFromSitefinityCatalog(sitefinityCatalog));
-                }
+                return BuildUCommerceCatalogFromSitefinityCatalog(catalog);
             }
             finally
             {
                 _session.Close();
             }
-
-            return ucommerceCatalogs;
         }
 
-        private ProductCatalog BuildUCommerceCatalogFromSitefinityCatalog(SitefinityCatalog sfCatalog)
+        private ProductCatalog BuildUCommerceCatalogFromSitefinityCatalog(SitefinityCatalogCurrencyCulture sfCatalogCurrencyCulture)
         {
-            var uCommerceCatalog = _session.Query<ProductCatalog>().FirstOrDefault(a => a.Name == sfCatalog.CatalogName);
+            var uCommerceCatalog = _session.Query<ProductCatalog>().FirstOrDefault(a => a.Name == sfCatalogCurrencyCulture.CatalogName);
 
             if (uCommerceCatalog != null)
             {
-                Log.Warn($"Catalog name {sfCatalog.CatalogName} already present in UCommerce");
+                Log.Warn($"Catalog name {sfCatalogCurrencyCulture.CatalogName} already present in UCommerce");
                 return uCommerceCatalog;
             }
 
-            var currency = CreateCurrency(DefaultCurrencyISOCode);
-            var priceGroup = CreatePriceGroup(DefaultPriceGroupName, currency);
-            var productCatalogGroup = CreateProductCatalogGroup(DefaultCatalogGroupName, currency);
-            uCommerceCatalog = new ProductCatalog
-            {
-                Name = sfCatalog.CatalogName,
-                PriceGroup = priceGroup,
-                ProductCatalogGroup = productCatalogGroup,
-                ShowPricesIncludingVAT = true,
-                DisplayOnWebSite = true,
-                LimitedAccess = false,
-                Deleted = false,
-                SortOrder = 0
-            };
+            return CreateCatalog(sfCatalogCurrencyCulture);
+        }
+
+        private ProductCatalog CreateCatalog(SitefinityCatalogCurrencyCulture sfCatalogCurrencyCulture)
+        {
+            var uCommerceCatalog = new ProductCatalog();
+            var defaultCurrency = AddCatalogPriceGroups(uCommerceCatalog, sfCatalogCurrencyCulture);
+            var productCatalogGroup = CreateProductCatalogGroup(DefaultCatalogGroupName, defaultCurrency);
+
+            uCommerceCatalog.Name = sfCatalogCurrencyCulture.CatalogName;
+            uCommerceCatalog.ProductCatalogGroup = productCatalogGroup;
+            uCommerceCatalog.ShowPricesIncludingVAT = true;
+            uCommerceCatalog.DisplayOnWebSite = true;
+            uCommerceCatalog.LimitedAccess = false;
+            uCommerceCatalog.Deleted = false;
+            uCommerceCatalog.SortOrder = 0;
 
             return uCommerceCatalog;
         }
 
-        private ProductCatalogGroup CreateProductCatalogGroup(string catalogGroupName, Currency currency)
+        private Currency AddCatalogPriceGroups(ProductCatalog uCommerceCatalog, SitefinityCatalogCurrencyCulture sfCatalogCurrencyCulture)
         {
-            return new ProductCatalogGroup()
+            var defaultCurrency = new Currency();
+   
+            foreach (var sfCurrency in sfCatalogCurrencyCulture.AllowedCurrencies.Currencies)
+            {
+                var currentCurrency = CreateCurrency(sfCurrency);
+                var priceGroup = new PriceGroup()
+                {
+                    Name = sfCurrency.DisplayName,
+                    Deleted = false,
+                    VATRate = sfCurrency.ExchangeRate,
+                    Currency = currentCurrency,
+                };
+     
+                if (sfCurrency.IsDefault)
+                {
+                    uCommerceCatalog.PriceGroup = priceGroup;
+                    defaultCurrency = currentCurrency;
+                }
+
+                uCommerceCatalog.AddAllowedPriceGroup(priceGroup);
+            }
+
+            return defaultCurrency;
+        }
+
+        private ProductCatalogGroup CreateProductCatalogGroup(string catalogGroupName, Currency defaultCurrency)
+        {
+            var productCatalogGroup = new ProductCatalogGroup()
             {
                 Name = catalogGroupName,
-                Currency = currency,
+                Currency = defaultCurrency,
                 CreateCustomersAsMembers = true,
                 ProductReviewsRequireApproval = true,
                 Deleted = false,
                 EmailProfile = _session.Query<EmailProfile>()
                     .SingleOrDefault(a => a.Name == "Default")
             };
+        
+            return productCatalogGroup;
         }
 
-        private PriceGroup CreatePriceGroup(string priceGroupName, Currency priceGroupCurrency)
+        private Currency CreateCurrency(CurrencyViewModel currency)
         {
-            var priceGroup = _session.Query<PriceGroup>().SingleOrDefault(a => a.Name == priceGroupName);
-            if (priceGroup != null)
-            {
-                return priceGroup;
-            }
+            var existingCurrency = _session.Query<Currency>()
+                .SingleOrDefault(a => a.ISOCode == currency.Key);
 
-            return new PriceGroup()
+            if (existingCurrency != null)
             {
-                Name = priceGroupName,
-                Deleted = false,
-                Currency = priceGroupCurrency
-            };
-        }
-
-        private Currency CreateCurrency(string ISOCode)
-        {
-            var currency = _session.Query<Currency>()
-                .SingleOrDefault(a => a.ISOCode == ISOCode);
-
-            if (currency != null)
-            {
-                return currency;
+                return existingCurrency;
             }
 
             return new Currency()
             {  
-                ISOCode = ISOCode,
+                ISOCode = currency.Key,
                 ExchangeRate = 0,
-                Deleted = false
+                Deleted = false,
             };
         }
     }

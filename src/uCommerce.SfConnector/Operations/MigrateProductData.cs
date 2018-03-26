@@ -7,7 +7,7 @@ using uCommerce.uConnector.Adapters.Senders;
 using UConnector;
 using UConnector.Api.V1;
 
-namespace MigrationCommandLineRunner.Operations
+namespace uCommerce.SfConnector.Operations
 {
     public class MigrateProductData : IMigrationOperation
     {
@@ -30,7 +30,7 @@ namespace MigrationCommandLineRunner.Operations
                     .WithOption(x => x.ConnectionString = sitefinityConnectionString)
                     .WithOption(x => x.Log = Log)
                 .Transform<SfProductListToUcProductList>()
-                    .WithOption(x => x.DefaultPriceGroupName = MigrationSettings.Settings.DefaultUcommercePriceGroupName)
+                    .WithOption(x => x.SitefinitySiteName = MigrationSettings.Settings.SitefinitySiteName)
                     .WithOption(x => x.Log = Log)
                 .Send<ProductListToUCommerce>()
                     .WithOption(x => x.ConnectionString = uCommerceConnectionString)

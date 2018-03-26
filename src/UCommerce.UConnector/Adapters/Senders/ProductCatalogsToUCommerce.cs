@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using MigrationCommon.Exceptions;
 using NHibernate;
 using uCommerce.uConnector.Helpers;
 using UCommerce.EntitiesV2;
@@ -7,7 +8,7 @@ using UConnector.Framework;
 
 namespace uCommerce.uConnector.Adapters.Senders
 {
-    public class ProductCatalogsToUCommerce : Configurable, ISender<IEnumerable<ProductCatalog>>
+    public class ProductCatalogsToUCommerce : Configurable, ISender<ProductCatalog>
     {
         public string ConnectionString { private get; set; }
         public log4net.ILog Log { private get; set; }
@@ -17,34 +18,48 @@ namespace uCommerce.uConnector.Adapters.Senders
         /// <summary>
         /// Persist catalogs to Ucommerce
         /// </summary>
-        /// <param name="catalogs">transformed catalogs</param>
-        public void Send(IEnumerable<ProductCatalog> catalogs)
+        /// <param name="catalog">transformed catalog</param>
+        public void Send(ProductCatalog catalog)
         {
             _session = SessionFactory.Create(ConnectionString);
 
             try
             {
-                WriteCatalogs(catalogs);
+                WritePriceGroups(catalog);
+                WriteCatalog(catalog);
             }
             catch (Exception ex)
             {
                 Log.Fatal($"A fatal exception occurred trying to write catalog data to Ucommerce: \n{ex}");
+                throw new MigrationException("A fatal exception occurred trying to write catalog data to Ucommerce", ex);
             }
         }
 
-        private void WriteCatalogs(IEnumerable<ProductCatalog> catalogs)
+        private void WritePriceGroups(ProductCatalog catalog)
         {
             using (var tx = _session.BeginTransaction())
             {
-                foreach (var catalog in catalogs)
+                foreach (var priceGroup in catalog.AllowedPriceGroups)
                 {
-                    Log.Info($"adding {catalog.Name} catalog");
-                    _session.SaveOrUpdate(catalog);
+                    Log.Info($"adding {priceGroup.Name} price group");
+                    _session.SaveOrUpdate(priceGroup);
                 }
 
                 tx.Commit();
-                _session.Flush();
             }
+            _session.Flush();
+        }
+
+        private void WriteCatalog(ProductCatalog catalog)
+        {
+            using (var tx = _session.BeginTransaction())
+            {
+                Log.Info($"adding {catalog.Name} catalog");
+                _session.SaveOrUpdate(catalog);
+
+                tx.Commit();
+            }
+            _session.Flush();
         }
     }
 }

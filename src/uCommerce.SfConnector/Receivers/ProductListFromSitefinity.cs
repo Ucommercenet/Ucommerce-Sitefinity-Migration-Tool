@@ -39,7 +39,7 @@ namespace uCommerce.SfConnector.Adapters.Receivers
                     products = productWrapper.GetProducts("", "", 0, int.MaxValue, "", "", "").Items.ToList();
                     Log.Info($"{products.Count()} product returned from Sitefinity");
 
-                    Log.Info("fetching product attributes");
+                    Log.Info("fetching product category associations");
                     AddCategoryAssociations(products);
 
                     Log.Info("fetching product attributes");
@@ -85,7 +85,6 @@ namespace uCommerce.SfConnector.Adapters.Receivers
             // sf wcf web api.  So, until a better way is found, we need to grab them from the database.
             using (var connection = SqlSessionFactory.Create(ConnectionString))
             {
-                Log.Info("fetching product category associations");
                 foreach (var product in products)
                 {
                     var categoryAssociations = connection.Query<Guid>(

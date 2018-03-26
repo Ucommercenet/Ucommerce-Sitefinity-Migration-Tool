@@ -7,7 +7,7 @@ using uCommerce.uConnector.Adapters.Senders;
 using UConnector;
 using UConnector.Api.V1;
 
-namespace MigrationCommandLineRunner.Operations
+namespace uCommerce.SfConnector.Operations
 {
     public class MigrateProductTypes : IMigrationOperation
     {
