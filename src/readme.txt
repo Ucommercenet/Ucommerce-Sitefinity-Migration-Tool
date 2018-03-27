@@ -26,8 +26,9 @@ Prior to performing migration, perform the following:
 
 1. Backup Sitefinity database
 2. Install a fresh instance of UCommerce
-3. Update app.config in the Migration.CommandLine.Runner project:
+3. Update app.config in the Migration.CommandLine.Runner project where appropriate:
 	a) SitefinityDepartmentTaxonomyId: this is the id (guid) of the Department taxonomy in the Sitefinity sf_taxonomies database table in Sitefinity. 
+	   The current default value should be correct.
 	b) DefaultUcommerceCategoryDefinitionName: The name of the UCommerce definition that all imported departments will use in UCommerce as defined 
 	   in the UCommerce_Definition database table in UCommerce.  This value defaults to the "Default Category Definition"
 	c) DefaultUCommerceCatalogGroupName: the name used for the catalog group created in UCommerce and associated to the UCommerce catalog.
