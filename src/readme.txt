@@ -1,7 +1,52 @@
 SITEFINITY TO UCOMMERCE DATA MIGRATION
 ==================================================
-Perform the following ordered steps:
+
+Currently Supported (migrated):
+- Single Site/Catalog
+- Allowable currencies
+- Departments (categories in UCommerce)
+- Parent/child relationships in Departments/Categories to nth level
+- Product types/definitions (Note: customized metadata currently not supported though planned)
+- Products
+- Product relationships to product types/definitions
+- Product relationships to categories
+- Product variants
+- Product prices
+
+Planned Support:
+- Product images
+- Custom attributes on product types (definitions in Sitefinity)
+- Friendly Urls
+- Multilingual
+- Product availability/inventory
+- Customers / Orders
+
+
+Prior to performing migration, perform the following:
 
 1. Backup Sitefinity database
 2. Install a fresh instance of UCommerce
-3. Execute prerequisite db scripts located in the PrerequisiteDBScripts folder
+3. Update app.config in the Migration.CommandLine.Runner project:
+	a) SitefinityDepartmentTaxonomyId: this is the id (guid) of the Department taxonomy in the Sitefinity sf_taxonomies database table in Sitefinity. 
+	b) DefaultUcommerceCategoryDefinitionName: The name of the UCommerce definition that all imported departments will use in UCommerce as defined 
+	   in the UCommerce_Definition database table in UCommerce.  This value defaults to the "Default Category Definition"
+	c) DefaultUCommerceCatalogGroupName: the name used for the catalog group created in UCommerce and associated to the UCommerce catalog.
+	   Note: the migration tool uses the Sitefinity site name as the name of the UCommerce catalog itself.
+    d) SitefinitySiteName: the name of the Sitefinity site to be migrated, stored in the nme field, sf_sites table in the Sitefinity database.
+	e) SitefinityBaseUrl: base url of sitefinity and also the sitefinity web services (i.e. http://staging.sitefinity.mycompany.com)
+	f) SitefinityUsername: the username that the migration tool will use to access the sitefinity web services on the backend.  
+	   Creating a separate account on the Sitefinity Administration backend site is recommended in Administration/Users.  
+	   Be sure the account has the Administrators role.
+	g) SitefinityPassword: password of the Sitefinity user account mentioned above for accessing web services.
+    h) SitefinityConnectionString: valid connection string to the source Sitefinity database.
+    i) UCommerceConnectionString: valid connection string to the target UCommerce database.	
+	
+
+Technical Notes:
+The migration tool is built upon the UCommerce UConnector foundation and its Fluid RTS model.
+Anyone familiar with UConnector should be fairly comfortable with the structure of the tool when reviewing source.
+Pulling sitefinity data is primarily managed through the sitefinity web services using a lightly modified
+version of the timw255.Sitefinity.RestClient (https://github.com/timw255/timw255.Sitefinity.RestClient).
+Where necessary, data is pulled directly from the Sitefinity database using the lightweight Dapper
+ORM (https://github.com/StackExchange/Dapper).   Data is pushed into UCommerce, facilitated by UConnector
+and the UCommerce APIs.  nHibernate is used on the UCommerce side as its ORM.
