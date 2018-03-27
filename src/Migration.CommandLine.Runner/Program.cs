@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Configuration;
+using uCommerce.SfConnector.Configuration;
 using uCommerce.SfConnector.Operations;
+using uCommerce.SfConnector.Receivers;
 using UConnector;
+using UConnector.Api.V1;
 
 namespace MigrationCommandLineRunner
 {
@@ -17,6 +21,15 @@ namespace MigrationCommandLineRunner
                 Log.Info("================== Data Migration CommandLine Runner ==================");
                 var operationEngine = new OperationEngine();
 
+                Log.Info("******** Verifying Connectivity ********");
+                var connectivityTests = new ConnectivityTests(Log);
+                if (!connectivityTests.TestConnections())
+                {
+                    Log.Info("Fatal exception while trying to establish connectivity to systems under migration.");
+                    Console.Read();
+                    return;
+                }
+               
                 Log.Info("******** Migrating catalog, culture, currency definitions ********");
                 var migrateCatalogs = new MigrateCatalogs {Log = Log};
                 operationEngine.Execute(migrateCatalogs.BuildOperation());

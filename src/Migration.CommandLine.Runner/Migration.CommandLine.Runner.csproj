@@ -86,6 +86,10 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="timw255.Sitefinity.RestClient, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\TimW255RestCient\timw255.Sitefinity.RestClient.dll</HintPath>
+    </Reference>
     <Reference Include="UCommerce">
       <HintPath>..\..\lib\uCommerce\UCommerce.dll</HintPath>
     </Reference>
@@ -99,6 +103,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConnectivityTests.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -125,6 +130,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MigrationCommon\MigrationCommon.csproj">
+      <Project>{38c21511-2b12-496e-8a70-dba3b0b691a0}</Project>
+      <Name>MigrationCommon</Name>
+    </ProjectReference>
     <ProjectReference Include="..\uCommerce.SfConnector\uCommerce.SfConnector.csproj">
       <Project>{116a45e4-872a-4c59-a05d-402fc50795d0}</Project>
       <Name>uCommerce.SfConnector</Name>

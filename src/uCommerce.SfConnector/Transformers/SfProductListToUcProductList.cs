@@ -102,7 +102,7 @@ namespace uCommerce.SfConnector.Transformers
             var displayName = sfProduct.Item.Title;
             var shortDescription = sfProduct.Item.Description;
             var longDescription = sfProduct.Item.Description;
-
+       
             var desc = new ProductDescription
             {
                 CultureCode = _cultureInfo.Name,
