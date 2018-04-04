@@ -1,7 +1,7 @@
 SITEFINITY TO UCOMMERCE DATA MIGRATION
 ==================================================
 
-Currently Supported (migrated):
+Major Entities/Relationships Currently Supported (migrated):
 - Single Site/Catalog
 - Allowable currencies
 - Departments (categories in UCommerce)
@@ -11,13 +11,13 @@ Currently Supported (migrated):
 - Product relationships to product types/definitions
 - Product relationships to categories
 - Product variants
+- Custom attributes on product types (definitions in Sitefinity) - currently stored as text only in UCommerce
 - Product prices
 
 Planned Support:
 - Product images
-- Custom attributes on product types (definitions in Sitefinity)
 - Friendly Urls
-- Multilingual
+- Multilingual descriptions
 - Product availability/inventory
 - Customers / Orders
 
