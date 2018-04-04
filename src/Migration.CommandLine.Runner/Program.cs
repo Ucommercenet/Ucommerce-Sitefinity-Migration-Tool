@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Configuration;
-using uCommerce.SfConnector.Configuration;
 using uCommerce.SfConnector.Operations;
-using uCommerce.SfConnector.Receivers;
 using UConnector;
-using UConnector.Api.V1;
 
 namespace MigrationCommandLineRunner
 {
@@ -25,7 +21,7 @@ namespace MigrationCommandLineRunner
                 var connectivityTests = new ConnectivityTests(Log);
                 if (!connectivityTests.TestConnections())
                 {
-                    Log.Info("Fatal exception while trying to establish connectivity to systems under migration.");
+                    Log.Fatal("Fatal exception while trying to establish connectivity to systems under migration.");
                     Console.Read();
                     return;
                 }
@@ -51,7 +47,7 @@ namespace MigrationCommandLineRunner
             }
             catch (Exception ex)
             {
-                Log.Error("There was an error while executing the migration.  Details: ", ex);
+                Log.Fatal("There was an unrecoverable error while executing the migration.  Details: ", ex);
                 Console.Read();
             }
         }

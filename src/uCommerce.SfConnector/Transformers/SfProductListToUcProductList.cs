@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.Linq;
+using System.Web.Script.Serialization;
 using MigrationCommon.Extensions;
 using NHibernate;
 using NHibernate.Linq;
@@ -78,6 +79,9 @@ namespace uCommerce.SfConnector.Transformers
             // Prices
             AddProductPrices(product, sfProduct.Item.Price);
 
+            // Custom Properties
+            AddProductProperties(product, sfProduct);
+
             // Product Variants
             AddProductVariants(product, sfProduct);
         }
@@ -144,33 +148,66 @@ namespace uCommerce.SfConnector.Transformers
             }
         }
 
-        private void AddProductProperty(Product product, string name, string value)
+        private void AddProductProperties(Product product, ProductViewModel sfProduct)
         {
+            if (sfProduct.Item.CustomFields.Count == 0) return;
 
-            var productDefinitionField = _session.Query<ProductDefinitionField>().FirstOrDefault(x => x.Name == name
-                             && x.ProductDefinition.ProductDefinitionId == product.ProductDefinition.Id);
-
-            if (productDefinitionField == null)
+            // All properties are currently imported as ShortText properties
+            var dataType = _session.Query<DataType>().FirstOrDefault(x => x.TypeName == "ShortText");
+            foreach (var customProperty in sfProduct.Item.CustomFields)
             {
-                Log.Error($"Could not add product property value '{value}' for sku '{product.Sku}'.  Product definition field with name '{name}' not found.");
-                return;
+                if (customProperty.Key == "Department") continue;
+
+                var property =
+                    product.ProductDefinition.ProductDefinitionFields.FirstOrDefault(x => x.Name == customProperty.Key);
+
+                if (property == null)
+                {
+                    property = new ProductDefinitionField
+                    {
+                        DisplayOnSite = true,
+                        Deleted = false,
+                        RenderInEditor = true,
+                        IsVariantProperty = false,
+                        SortOrder = 0,
+                        Name = customProperty.Key,
+                        DataType = dataType
+
+                    };
+                    product.ProductDefinition.AddProductDefinitionField(property);
+                }
+
+                var propertyValue = GetPropertyValue(customProperty);
+                var currentProductProperty = new ProductProperty
+                {
+                    Value = propertyValue,
+                    ProductDefinitionField = property,
+                    Product = product
+                };
+
+                product.AddProductProperty(currentProductProperty);
+            }
+        }
+
+        private static string GetPropertyValue(KeyValuePair<string, object> customProperty)
+        {
+            var propertyValue = customProperty.Value.ToString();
+            
+            // Empty Object
+            if (propertyValue == "[]" || propertyValue == "{}")
+                return string.Empty;
+
+            // Non-JSON value
+            if (!propertyValue.StartsWith("{") && !propertyValue.StartsWith("["))
+                return propertyValue;
+
+            var propertyValueObj = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(propertyValue);
+            if (propertyValueObj?["Value"] != null)
+            {
+                return propertyValueObj["Value"];
             }
 
-            var currentProductProperty = product.GetProperties().Cast<ProductProperty>()
-                .SingleOrDefault(x => x.ProductDefinitionField.Name == name);
-            if (currentProductProperty != null)
-            {
-                currentProductProperty.Value = value;
-                return;
-            }
-
-            currentProductProperty = new ProductProperty
-            {
-                Value = value,
-                ProductDefinitionField = productDefinitionField,
-                Product = product
-            };
-            product.AddProductProperty(currentProductProperty);
+            return string.Empty;
         }
 
         private void AddProductDescriptionProperty(Product product, string name, string value, string cultureCode)
