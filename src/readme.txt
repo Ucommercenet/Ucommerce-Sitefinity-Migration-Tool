@@ -6,12 +6,12 @@ Major Entities/Relationships Currently Supported (migrated):
 - Allowable currencies
 - Departments (categories in UCommerce)
 - Parent/child relationships in Departments/Categories to nth level
-- Product types/definitions (Note: customized metadata currently not supported though planned)
+- Product types/definitions  
 - Products
 - Product relationships to product types/definitions
 - Product relationships to categories
 - Product variants
-- Custom attributes on product types (definitions in Sitefinity) - currently stored as text only in UCommerce
+- Custom attributes on product types/definitions - currently stored as text only in UCommerce
 - Product prices
 
 Planned Support:
