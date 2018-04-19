@@ -21,7 +21,6 @@ Planned Support:
 - Product availability/inventory
 - Customers / Orders
 
-
 Prior to performing migration, perform the following:
 
 1. Backup Sitefinity database
@@ -43,7 +42,8 @@ Prior to performing migration, perform the following:
     i) UCommerceConnectionString: valid connection string to the target UCommerce database.	
 	
 
-Technical Notes:
+Additional Technical Notes:
+
 The migration tool is built upon the UCommerce UConnector foundation and its Fluid RTS model.
 Anyone familiar with UConnector should be fairly comfortable with the structure of the tool when reviewing source.
 Pulling sitefinity data is primarily managed through the sitefinity web services using a lightly modified
@@ -51,3 +51,11 @@ version of the timw255.Sitefinity.RestClient (https://github.com/timw255/timw255
 Where necessary, data is pulled directly from the Sitefinity database using the lightweight Dapper
 ORM (https://github.com/StackExchange/Dapper).   Data is pushed into UCommerce, facilitated by UConnector
 and the UCommerce APIs.  nHibernate is used on the UCommerce side as its ORM.
+
+Testing during initial development was done against a rather small "happy path" dataset.  There are some more minor attributes of Entities 
+that are defaulted or ignored in the mapping.   There will be fine tuning done as more extensive testings is performed and 
+results analyzed. 
+
+It is anticipated that a batching mechanism will also need to be added, particularly for product migration in product catalogs that are quite large.  
+The amount of data data placed in memory for a large catalog to process products in one RTS iteration is likely untenable.   Further testing against
+real customer catalogs should help reveal any breaking points whereby further design consideration and refactoring can happen from there.
