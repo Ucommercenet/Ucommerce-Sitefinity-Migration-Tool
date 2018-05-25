@@ -4,6 +4,7 @@ using System.Linq;
 using MigrationCommon.Exceptions;
 using timw255.Sitefinity.RestClient;
 using timw255.Sitefinity.RestClient.Model;
+using timw255.Sitefinity.RestClient.ServiceWrappers.Configuration;
 using timw255.Sitefinity.RestClient.ServiceWrappers.Taxonomies;
 using UConnector.Framework;
 
@@ -29,10 +30,7 @@ namespace uCommerce.SfConnector.Receivers
                 using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
                 {
                     Log.Info("fetching product types from Sitefinity");
-                    var categoriesWrapper = new HierarchicalTaxonServiceWrapper(sf);
-                    categories = categoriesWrapper
-                        .GetTaxa(new Guid(SitefinityDepartmentTaxonomyId), "", "", 0, 0, "", "", false, "").Items
-                        .ToList();
+                    categories = GetCategoriesForAllCultures(sf);
                     Log.Info($"{categories.Count()} departments returned from Sitefinity");
                 }
             }
@@ -43,6 +41,59 @@ namespace uCommerce.SfConnector.Receivers
             }
 
             return categories;
+        }
+
+        private List<WcfHierarchicalTaxon> GetCategoriesForAllCultures(SitefinityRestClient sf)
+        {
+            var culturesToMigrate = GetCultures(sf);
+            List<WcfHierarchicalTaxon> categories;
+            var categoriesWrapper = new HierarchicalTaxonServiceWrapper(sf);
+            var defaultCulture = culturesToMigrate.First(x => x.IsDefault);
+            categories = categoriesWrapper
+                .GetTaxa(new Guid(SitefinityDepartmentTaxonomyId), "", "", 0, 0, "", "", false, "", defaultCulture.Culture).Items
+                .ToList();
+
+            AddCultureToCategories(categories, defaultCulture);
+
+            var secondaryCultures = culturesToMigrate.Where(x => x.IsDefault == false);
+            foreach (var culture in secondaryCultures)
+            {
+                var cultureCategories = categoriesWrapper
+                    .GetTaxa(new Guid(SitefinityDepartmentTaxonomyId), "", "", 0, 0, "", "", false, "", culture.Culture).Items
+                    .ToList();
+
+                AddSecondaryCulturesToCategories(categories, cultureCategories, culture.Culture);
+            }
+
+            return categories;
+        }
+
+        private void AddCultureToCategories(List<WcfHierarchicalTaxon> categories, CultureViewModel defaultCulture)
+        {
+            foreach (var category in categories)
+            {
+                category.CultureCode = defaultCulture.Culture;
+            }
+        }
+
+        private static void AddSecondaryCulturesToCategories(List<WcfHierarchicalTaxon> categories, List<WcfHierarchicalTaxon> cultureCategories, string culture)
+        {
+            foreach (var category in categories)
+            {
+                var translation = cultureCategories.First(x => x.Name == category.Name);
+                category.CultureTranslations.Add(culture, translation);
+            }
+        }
+
+        /// <summary>
+        /// TODO: refactor this out to a common location for localizing other entities like products
+        /// </summary>
+        private static List<CultureViewModel> GetCultures(SitefinityRestClient sf)
+        {
+            var configuration = new ConfigSectionItemsServiceWrapper(sf);
+            var languages = configuration.GetLocalizationBasicSettings(false);
+
+            return languages.Cultures.ToList();
         }
     }
 }

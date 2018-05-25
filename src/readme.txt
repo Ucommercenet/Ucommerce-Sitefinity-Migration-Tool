@@ -13,11 +13,12 @@ Major Entities/Relationships Currently Supported (migrated):
 - Product variants
 - Custom attributes on product types/definitions - currently stored as text only in UCommerce
 - Product prices
+- Culture specific category names and descriptions
 
 Planned Support:
 - Product images
 - Friendly Urls
-- Multilingual descriptions
+- Culture specific product definition names and products names/descriptions
 - Product availability/inventory
 - Customers / Orders
 
@@ -57,5 +58,5 @@ that are defaulted or ignored in the mapping.   There will be fine tuning done a
 results analyzed. 
 
 It is anticipated that a batching mechanism will also need to be added, particularly for product migration in product catalogs that are quite large.  
-The amount of data data placed in memory for a large catalog to process products in one RTS iteration is likely untenable.   Further testing against
-real customer catalogs should help reveal any breaking points whereby further design consideration and refactoring can happen from there.
+The amount of data placed in memory for a large catalog to process products in one RTS iteration is likely untenable.   Further testing against
+real customer catalogs should help reveal any breaking points to guide further design consideration and refactoring.

@@ -55,6 +55,5 @@ namespace uCommerce.SfConnector.Configuration
         /// </summary>
         [ConfigurationProperty("SitefinityPassword", IsRequired = true)]
         public string SitefinityPassword => this["SitefinityPassword"] as string;
-
     }
 }

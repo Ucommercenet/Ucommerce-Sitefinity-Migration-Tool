@@ -63,7 +63,7 @@ namespace uCommerce.SfConnector.Transformers
                 Name = sfCategory.Title,
                 ProductCatalog = currentCatalog,
                 Definition = categoryDefinition,
-                DisplayOnSite = true,
+                DisplayOnSite = true
             };
 
             UpdateCategoryAssociations(category, sfCategory);
@@ -123,12 +123,23 @@ namespace uCommerce.SfConnector.Transformers
             // Category description(s)
             category.CategoryDescriptions.Add(new CategoryDescription()
             {
-                CultureCode = "en-US",  // Culture specific are TODO
+                CultureCode = sfCategory.CultureCode,
                 Description = sfCategory.Description,
                 DisplayName = sfCategory.Title,
                 RenderAsContent = true,
                 Category = category
             });
+
+            foreach (var translation in sfCategory.CultureTranslations)
+            {
+                category.AddCategoryDescription(new CategoryDescription()
+                {
+                    CultureCode = translation.Key,
+                    Description = translation.Value.Description,
+                    DisplayName = translation.Value.Title,
+                    Category = category
+                });
+            }
         }
 
         private Definition GetCategoryDefinition()
