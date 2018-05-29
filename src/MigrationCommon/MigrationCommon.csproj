@@ -44,7 +44,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="timw255.Sitefinity.RestClient, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\tools\timw255.Sitefinity.RestClient\bin\Debug\timw255.Sitefinity.RestClient.dll</HintPath>
+      <HintPath>..\..\lib\TimW255RestCient\timw255.Sitefinity.RestClient.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
