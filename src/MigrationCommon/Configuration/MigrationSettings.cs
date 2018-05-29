@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
 
-namespace uCommerce.SfConnector.Configuration
+namespace MigrationCommon.Configuration
 {
     public class MigrationSettings
     {

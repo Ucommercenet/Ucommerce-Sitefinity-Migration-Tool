@@ -14,11 +14,12 @@ Major Entities/Relationships Currently Supported (migrated):
 - Custom attributes on product types/definitions - currently stored as text only in UCommerce
 - Product prices
 - Culture specific category names and descriptions
+- Culture specific product names and descroptions
 
 Planned Support:
 - Product images
 - Friendly Urls
-- Culture specific product definition names and products names/descriptions
+- Culture specific product definition names and properties
 - Product availability/inventory
 - Customers / Orders
 

@@ -93,7 +93,7 @@ namespace timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce.Catalog
         }
 
         //[WebGet(UriTemplate = "/?provider={provider}&sortExpression={sortExpression}&skip={skip}&take={take}&filter={filter}&specificProductType={specificProductType}&otherFilters={otherFilters}")]
-        public CollectionContext<ProductViewModel> GetProducts(string provider, string sortExpression, int skip, int take, string filter, string specificProductType, string otherFilters)
+        public CollectionContext<ProductViewModel> GetProducts(string provider, string sortExpression, int skip, int take, string filter, string specificProductType, string otherFilters, string culture = null)
         {
             var request = new RestRequest(this.ServiceUrl + "/?provider={provider}&sortExpression={sortExpression}&skip={skip}&take={take}&filter={filter}&specificProductType={specificProductType}&otherFilters={otherFilters}", Method.GET);
 
@@ -104,6 +104,11 @@ namespace timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce.Catalog
             request.AddUrlSegment("filter", filter);
             request.AddUrlSegment("specificProductType", specificProductType);
             request.AddUrlSegment("otherFilters", otherFilters);
+
+            if (culture != null)
+            {
+                request.AddHeader("SF_UI_CULTURE", culture);
+            }
 
             return ExecuteRequest<CollectionContext<ProductViewModel>>(request);
         }

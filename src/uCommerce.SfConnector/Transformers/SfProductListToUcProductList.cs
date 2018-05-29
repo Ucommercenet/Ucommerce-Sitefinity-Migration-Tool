@@ -4,11 +4,11 @@ using System.Configuration;
 using System.Globalization;
 using System.Linq;
 using System.Web.Script.Serialization;
+using MigrationCommon.Data;
 using MigrationCommon.Extensions;
 using NHibernate;
 using NHibernate.Linq;
 using timw255.Sitefinity.RestClient.Model;
-using uCommerce.SfConnector.Helpers;
 using uCommerce.uConnector.Helpers;
 using UCommerce.EntitiesV2;
 using UConnector.Framework;
@@ -102,18 +102,29 @@ namespace uCommerce.SfConnector.Transformers
 
         private void AddProductDescriptions(Product product, ProductViewModel sfProduct)
         {
-            // TODO: Account for culture specific descriptions
             var displayName = sfProduct.Item.Title;
             var shortDescription = sfProduct.Item.Description;
             var longDescription = sfProduct.Item.Description;
        
             var desc = new ProductDescription
             {
-                CultureCode = _cultureInfo.Name,
+                CultureCode = sfProduct.CultureCode,
                 DisplayName = displayName,
                 ShortDescription = shortDescription,
                 LongDescription = longDescription
             };
+
+            foreach (var translation in sfProduct.CultureTranslations)
+            {
+                product.AddProductDescription(new ProductDescription()
+                {
+                    CultureCode = translation.Key,
+                    DisplayName = translation.Value.Item.Title,
+                    ShortDescription = translation.Value.Item.Description,
+                    LongDescription = translation.Value.Item.Description,
+                    Product = product
+                });
+            }
 
             product.AddProductDescription(desc);
         }
@@ -171,7 +182,8 @@ namespace uCommerce.SfConnector.Transformers
                         IsVariantProperty = false,
                         SortOrder = 0,
                         Name = customProperty.Key,
-                        DataType = dataType
+                        DataType = dataType,
+                        Multilingual = true
 
                     };
                     product.ProductDefinition.AddProductDefinitionField(property);

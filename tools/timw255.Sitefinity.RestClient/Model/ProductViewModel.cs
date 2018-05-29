@@ -10,6 +10,11 @@ namespace timw255.Sitefinity.RestClient.Model
 {
     public class ProductViewModel
     {
+        public ProductViewModel()
+        {
+            CultureTranslations = new Dictionary<string, ProductViewModel>();
+        }
+
         public CultureInfo[] AvailableCultures { get; set; }
         public string[] AvailableLanguages { get; set; }
         public string EditCommandName { get; set; }
@@ -23,7 +28,7 @@ namespace timw255.Sitefinity.RestClient.Model
         public IEnumerable<Guid> CategoryAssociations { get; set; }
         public List<ProductAttributeValuePairViewModel> ProductAttributeValues { get; set; }
         public List<ProductVariation> ProductVariations { get; set; }
-
-        public ProductViewModel() { }
+        public string CultureCode { get; set; }
+        public Dictionary<string, ProductViewModel> CultureTranslations { get; set; }
     }
 }

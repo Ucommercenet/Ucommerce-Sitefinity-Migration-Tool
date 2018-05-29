@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
 using MigrationCommandLineRunner.Helpers;
-using uCommerce.SfConnector.Configuration;
+using MigrationCommon.Configuration;
 using uCommerce.SfConnector.Receivers;
 using uCommerce.SfConnector.Transformers;
 using uCommerce.uConnector.Adapters.Senders;

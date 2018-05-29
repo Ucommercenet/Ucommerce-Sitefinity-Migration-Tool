@@ -27,7 +27,7 @@ namespace uCommerce.uConnector.Adapters.Senders
 		    try
             {
 		        WriteProducts(products);
-		        Log.Info("product migration done.");
+		        Log.Info("product batch migrated.");
 		    }
 		    catch (Exception ex)
 		    {

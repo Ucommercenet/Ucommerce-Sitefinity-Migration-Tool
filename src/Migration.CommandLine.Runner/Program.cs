@@ -1,4 +1,5 @@
 ﻿using System;
+using MigrationCommon.Data;
 using uCommerce.SfConnector.Operations;
 using UConnector;
 
@@ -7,6 +8,8 @@ namespace MigrationCommandLineRunner
     public class Program
     {
         private static readonly log4net.ILog Log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        private const int ProductBatchSize = 25;
+
         /// <summary>
         /// Command line runner entry point
         /// </summary>
@@ -39,8 +42,14 @@ namespace MigrationCommandLineRunner
                 operationEngine.Execute(migrateProductTypes.BuildOperation());
 
                 Log.Info("******** Migrating core product data ********");
-                var migrateProductData = new MigrateProductData { Log = Log };
-                operationEngine.Execute(migrateProductData.BuildOperation());
+                var productCount = DataHelper.GetProductCount();
+                var currentBatchCount = 0;
+                do
+                {
+                    var migrateProductData = new MigrateProductData {Log = Log, Skip = currentBatchCount, Take = ProductBatchSize};
+                    operationEngine.Execute(migrateProductData.BuildOperation());
+                    currentBatchCount += ProductBatchSize;
+                } while (currentBatchCount < productCount);
 
                 Log.Info("======================= Data Migration Complete =======================");
                 Console.Read();

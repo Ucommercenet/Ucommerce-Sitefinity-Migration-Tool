@@ -4,9 +4,9 @@ using System.Linq;
 using MigrationCommon.Exceptions;
 using timw255.Sitefinity.RestClient;
 using timw255.Sitefinity.RestClient.Model;
-using timw255.Sitefinity.RestClient.ServiceWrappers.Configuration;
 using timw255.Sitefinity.RestClient.ServiceWrappers.Taxonomies;
 using UConnector.Framework;
+using MigrationCommon.Data;
 
 namespace uCommerce.SfConnector.Receivers
 {
@@ -45,7 +45,7 @@ namespace uCommerce.SfConnector.Receivers
 
         private List<WcfHierarchicalTaxon> GetCategoriesForAllCultures(SitefinityRestClient sf)
         {
-            var culturesToMigrate = GetCultures(sf);
+            var culturesToMigrate = DataHelper.GetCulturesToMigrate(sf).ToList();
             List<WcfHierarchicalTaxon> categories;
             var categoriesWrapper = new HierarchicalTaxonServiceWrapper(sf);
             var defaultCulture = culturesToMigrate.First(x => x.IsDefault);
@@ -58,7 +58,7 @@ namespace uCommerce.SfConnector.Receivers
             var secondaryCultures = culturesToMigrate.Where(x => x.IsDefault == false);
             foreach (var culture in secondaryCultures)
             {
-                var cultureCategories = categoriesWrapper
+                var cultureCategories = categoriesWrapper 
                     .GetTaxa(new Guid(SitefinityDepartmentTaxonomyId), "", "", 0, 0, "", "", false, "", culture.Culture).Items
                     .ToList();
 
@@ -83,17 +83,6 @@ namespace uCommerce.SfConnector.Receivers
                 var translation = cultureCategories.First(x => x.Name == category.Name);
                 category.CultureTranslations.Add(culture, translation);
             }
-        }
-
-        /// <summary>
-        /// TODO: refactor this out to a common location for localizing other entities like products
-        /// </summary>
-        private static List<CultureViewModel> GetCultures(SitefinityRestClient sf)
-        {
-            var configuration = new ConfigSectionItemsServiceWrapper(sf);
-            var languages = configuration.GetLocalizationBasicSettings(false);
-
-            return languages.Cultures.ToList();
         }
     }
 }

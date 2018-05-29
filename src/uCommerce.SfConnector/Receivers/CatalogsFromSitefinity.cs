@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using Dapper;
+using MigrationCommon.Data;
 using MigrationCommon.Exceptions;
 using timw255.Sitefinity.RestClient;
 using timw255.Sitefinity.RestClient.ServiceWrappers.Configuration;
 using timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce;
-using uCommerce.SfConnector.Helpers;
 using uCommerce.SfConnector.Model;
 using UConnector.Framework;
 

@@ -87,7 +87,7 @@ namespace uCommerce.SfConnector.Transformers
             {
                 DefinitionField = propertyDefField,
                 Value = sfCategory.Id.ToString(),
-                CultureCode = string.Empty,
+                CultureCode = sfCategory.CultureCode,
                 Category = category
             });
         }
@@ -106,7 +106,7 @@ namespace uCommerce.SfConnector.Transformers
             definitionField = new DefinitionField()
             {
                 Name = sourceDefinitionFieldName,
-                Multilingual = false,
+                Multilingual = true,
                 Searchable = false,
                 BuiltIn = false,
                 DefaultValue = string.Empty,

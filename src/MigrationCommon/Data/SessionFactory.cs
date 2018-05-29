@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
 
-namespace uCommerce.SfConnector.Helpers
+namespace MigrationCommon.Data
 {
     public static class SqlSessionFactory
     {

@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dapper;
+using MigrationCommon.Data;
 using timw255.Sitefinity.RestClient;
 using timw255.Sitefinity.RestClient.Model;
 using timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce.Catalog;
-using uCommerce.SfConnector.Helpers;
 using UConnector.Framework;
 
 namespace uCommerce.SfConnector.Adapters.Receivers
@@ -19,6 +18,8 @@ namespace uCommerce.SfConnector.Adapters.Receivers
         public string SitefinityUsername { private get; set; }
         public string SitefinityPassword { private get; set; }
         public string ConnectionString { private get; set; }
+        public int Skip { private get; set; }
+        public int Take { private get; set; }
         public log4net.ILog Log { private get; set; }
 
         private ProductVariationServiceWrapper _productVariationServiceWrapper;
@@ -34,10 +35,10 @@ namespace uCommerce.SfConnector.Adapters.Receivers
             {
                 using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
                 {
-                    Log.Info("fetching products from Sitefinity");
-                    var productWrapper = new ProductServiceWrapper(sf);
-                    products = productWrapper.GetProducts("", "", 0, int.MaxValue, "", "", "").Items.ToList();
-                    Log.Info($"{products.Count()} product returned from Sitefinity");
+                    Log.Info($"fetching product batch {Skip}-{Skip+Take} from Sitefinity");
+                    products = GetProductsForAllCultures(sf);
+
+                    Log.Info($"{products.Count()} products returned from Sitefinity");
 
                     Log.Info("fetching product category associations");
                     AddCategoryAssociations(products);
@@ -52,9 +53,50 @@ namespace uCommerce.SfConnector.Adapters.Receivers
             catch (Exception ex)
             {
                 Log.Fatal($"A fatal exception occurred trying to fetch product data from Sitefinity: \n{ex}");
+                throw;
             }
 
             return products;
+        }
+
+        private List<ProductViewModel> GetProductsForAllCultures(SitefinityRestClient sf)
+        {
+            var culturesToMigrate = DataHelper.GetCulturesToMigrate(sf).ToList();
+            List<ProductViewModel> products;
+            var productWrapper = new ProductServiceWrapper(sf);
+            var defaultCulture = culturesToMigrate.First(x => x.IsDefault);
+            products = productWrapper.GetProducts("", "", Skip, Take, "", "", "", defaultCulture.Culture).Items.ToList();
+            
+            AddCultureToProducts(products, defaultCulture);
+
+            var secondaryCultures = culturesToMigrate.Where(x => x.IsDefault == false);
+            foreach (var culture in secondaryCultures)
+            {
+                var cultureProducts = productWrapper
+                    .GetProducts("", "", Skip, Take, "", "", "", culture.Culture).Items
+                    .ToList();
+
+                AddSecondaryCulturesToProducts(products, cultureProducts, culture.Culture);
+            }
+
+            return products;
+        }
+
+        private void AddCultureToProducts(List<ProductViewModel> products, CultureViewModel defaultCulture)
+        {
+            foreach (var product in products)
+            {
+                product.CultureCode = defaultCulture.Culture;
+            }
+        }
+
+        private static void AddSecondaryCulturesToProducts(List<ProductViewModel> products, List<ProductViewModel> cultureProducts, string culture)
+        {
+            foreach (var product in products)
+            {
+                var translation = cultureProducts.First(x => x.Id == product.Id);
+                product.CultureTranslations.Add(culture, translation);
+            }
         }
 
         private void AddProductVariants(List<ProductViewModel> products, SitefinityRestClient sf)
@@ -83,18 +125,9 @@ namespace uCommerce.SfConnector.Adapters.Receivers
         {
             // Strangely, product category associations do not seem to be available via the 
             // sf wcf web api.  So, until a better way is found, we need to grab them from the database.
-            using (var connection = SqlSessionFactory.Create(ConnectionString))
+            foreach (var product in products)
             {
-                foreach (var product in products)
-                {
-                    var categoryAssociations = connection.Query<Guid>(
-                        "select taxa.id from sf_ec_product prod " +
-                        "join sf_ec_product_department dept on prod.id = dept.id " +
-                        "join sf_taxa taxa on dept.val = taxa.id " +
-                        $"where prod.id = '{product.Item.Id}'");
-
-                    product.CategoryAssociations = categoryAssociations;
-                }
+                product.CategoryAssociations = DataHelper.GetProductCategoryAssociations(product.Item.Id.ToString());
             }
         }
 

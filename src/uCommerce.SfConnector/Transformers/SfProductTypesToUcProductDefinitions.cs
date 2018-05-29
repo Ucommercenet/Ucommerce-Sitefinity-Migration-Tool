@@ -61,6 +61,7 @@ namespace uCommerce.SfConnector.Transformers
                 Log.Info($"Adding attribute/definition field '{attribute.Title}' to product definition '{definition.Name}'");
                 definition.AddProductDefinitionField(new ProductDefinitionField()
                 {
+                    Multilingual = true,
                     DisplayOnSite = attribute.Visible,
                     Deleted = false,
                     RenderInEditor = true,
