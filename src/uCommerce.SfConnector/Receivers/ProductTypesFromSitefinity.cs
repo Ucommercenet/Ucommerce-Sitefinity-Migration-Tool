@@ -7,7 +7,7 @@ using timw255.Sitefinity.RestClient.Model;
 using timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce.Catalog;
 using UConnector.Framework;
 
-namespace uCommerce.SfConnector.Adapters.Receivers
+namespace uCommerce.SfConnector.Receivers
 {
     public class ProductTypesFromSitefinity : Configurable, IReceiver<IEnumerable<ProductTypeViewModel>>
     {

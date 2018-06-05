@@ -1,7 +1,7 @@
 ﻿using System.Configuration;
-using MigrationCommandLineRunner.Helpers;
 using MigrationCommon.Configuration;
-using uCommerce.SfConnector.Adapters.Receivers;
+using uCommerce.SfConnector.Helpers;
+using uCommerce.SfConnector.Receivers;
 using uCommerce.SfConnector.Transformers;
 using uCommerce.uConnector.Adapters.Senders;
 using UConnector;
@@ -29,7 +29,7 @@ namespace uCommerce.SfConnector.Operations
                     .WithOption(x => x.SitefinityBaseUrl = MigrationSettings.Settings.SitefinityBaseUrl)
                     .WithOption(x => x.SitefinityUsername = MigrationSettings.Settings.SitefinityUsername)
                     .WithOption(x => x.SitefinityPassword = MigrationSettings.Settings.SitefinityPassword)
-                    .WithOption(x => x.ConnectionString = sitefinityConnectionString)
+                    .WithOption(x => { })
                     .WithOption(x => x.Skip = Skip)
                     .WithOption(x => x.Take = Take)
                     .WithOption(x => x.Log = Log)

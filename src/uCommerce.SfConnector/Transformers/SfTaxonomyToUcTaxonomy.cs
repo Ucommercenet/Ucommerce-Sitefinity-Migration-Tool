@@ -124,8 +124,8 @@ namespace uCommerce.SfConnector.Transformers
             category.CategoryDescriptions.Add(new CategoryDescription()
             {
                 CultureCode = sfCategory.CultureCode,
-                Description = sfCategory.Description,
-                DisplayName = sfCategory.Title,
+                Description = sfCategory.Description.Trim(),
+                DisplayName = sfCategory.Title.Trim(),
                 RenderAsContent = true,
                 Category = category
             });
@@ -135,8 +135,8 @@ namespace uCommerce.SfConnector.Transformers
                 category.AddCategoryDescription(new CategoryDescription()
                 {
                     CultureCode = translation.Key,
-                    Description = translation.Value.Description,
-                    DisplayName = translation.Value.Title,
+                    Description = translation.Value.Description.Trim(),
+                    DisplayName = translation.Value.Title.Trim(),
                     Category = category
                 });
             }

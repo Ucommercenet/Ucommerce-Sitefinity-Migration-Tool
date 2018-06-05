@@ -10,7 +10,7 @@ using UConnector.Framework;
 namespace uCommerce.SfConnector.Transformers
 {
     public class SfProductTypesToUcProductDefinitions : ITransformer<IEnumerable<ProductTypeViewModel>,
-            IEnumerable<ProductDefinition>>
+        IEnumerable<ProductDefinition>>
     {
         public string ConnectionString { private get; set; }
         public log4net.ILog Log { private get; set; }
@@ -58,8 +58,9 @@ namespace uCommerce.SfConnector.Transformers
 
             foreach (var attribute in sfProductType.ProductAttributes)
             {
-                Log.Info($"Adding attribute/definition field '{attribute.Title}' to product definition '{definition.Name}'");
-                definition.AddProductDefinitionField(new ProductDefinitionField()
+                Log.Info(
+                    $"Adding attribute/definition field '{attribute.Title}' to product definition '{definition.Name}'");
+                var definitionField = new ProductDefinitionField()
                 {
                     Multilingual = true,
                     DisplayOnSite = attribute.Visible,
@@ -67,9 +68,12 @@ namespace uCommerce.SfConnector.Transformers
                     RenderInEditor = true,
                     IsVariantProperty = true,
                     SortOrder = 0,
-                    Name = attribute.Title.TrimEnd(),
+                    Name = attribute.Title.Trim(),
                     DataType = dataType
-                });
+                };
+
+                //definitionField.ProductDefinitionFieldDescriptions= AddDefinitionFieldDescriptions(sfProductType, definitionField);
+                definition.AddProductDefinitionField(definitionField);
             }
         }
     }

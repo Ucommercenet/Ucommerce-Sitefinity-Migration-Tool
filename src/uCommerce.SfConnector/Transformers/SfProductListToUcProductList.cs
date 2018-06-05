@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Configuration;
-using System.Globalization;
 using System.Linq;
 using System.Web.Script.Serialization;
 using MigrationCommon.Data;
@@ -18,12 +16,10 @@ namespace uCommerce.SfConnector.Transformers
 {
     public class SfProductListToUcProductList : ITransformer<IEnumerable<ProductViewModel>, IEnumerable<Product>>
     {
-        public string CategoryPartSeperator { get; set; }
         public string ConnectionString { private get; set; }
         public string SitefinitySiteName { private get; set; }
         public log4net.ILog Log { private get; set; }
 
-        private readonly CultureInfo _cultureInfo = new CultureInfo("en-US");
         private ISession _session;
         private PriceGroup _defaultPriceGroup;
 
@@ -116,17 +112,68 @@ namespace uCommerce.SfConnector.Transformers
 
             foreach (var translation in sfProduct.CultureTranslations)
             {
-                product.AddProductDescription(new ProductDescription()
+                var productDescription = new ProductDescription()
                 {
                     CultureCode = translation.Key,
                     DisplayName = translation.Value.Item.Title,
                     ShortDescription = translation.Value.Item.Description,
                     LongDescription = translation.Value.Item.Description,
                     Product = product
-                });
+                };
+
+                product.AddProductDescription(productDescription);
             }
 
             product.AddProductDescription(desc);
+        }
+
+        private void AddProductDescriptionsForVariants(Product product, ProductVariation sfProduct)
+        {
+            var productDefinitionId = product.ProductDefinition.Id;
+            var definition = _session.Query<ProductDefinition>().FirstOrDefault(x => x.ProductDefinitionId == productDefinitionId);
+
+            if (definition == null) return;
+
+            // Create product descriptions for each variant culture
+            foreach (var translation in sfProduct.CultureTranslations)
+            {
+                var attributeNames = translation.Value.VariantNames.Attribute.Split(',');
+                var attributeValues = translation.Value.VariantNames.AttributeValue.Split(',');
+                var productDefinitionFieldNames = sfProduct.VariantNames.Attribute.Split(',');
+
+                // There are no descriptions in Sitefinity at the variant level so for uCommerce we use
+                // the concatenated variant values for display name + long & short descriptions
+                var displayName = translation.Value.VariantNames.AttributeValue;
+                var shortDescription = translation.Value.VariantNames.AttributeValue;
+                var longDescription = translation.Value.VariantNames.AttributeValue;
+
+                var productDescription = new ProductDescription
+                {
+                    CultureCode = translation.Key,
+                    DisplayName = displayName,
+                    ShortDescription = shortDescription,
+                    LongDescription = longDescription
+                };
+
+                // Create product description properties for each variant value culture
+                for (var i = 0; i < attributeNames.Length; i++)
+                {
+                    var fieldName = productDefinitionFieldNames[i];
+                    var field = definition.ProductDefinitionFields.FirstOrDefault(x => x.Name == fieldName.Trim());
+
+                    var productDescriptionProperty = new ProductDescriptionProperty
+                    {
+                        ProductDefinitionField = field,
+                        ProductDescription = productDescription,
+                        Value = attributeValues[i],
+                        CultureCode = translation.Key
+                    };
+
+                    productDescription.AddProductDescriptionProperty(productDescriptionProperty);
+                }
+
+                product.AddProductDescription(productDescription);
+            }
         }
 
         private ProductDefinition GetProductDefinition(string definitionName)
@@ -222,37 +269,17 @@ namespace uCommerce.SfConnector.Transformers
             return string.Empty;
         }
 
-        private void AddProductDescriptionProperty(Product product, string name, string value, string cultureCode)
-        {
-            var field = new ProductDefinitionField();
-            field.Name = name;
-            field.Multilingual = true;
-
-            var productDescription = product.ProductDescriptions.SingleOrDefault(x => x.CultureCode == cultureCode);
-            if (productDescription == null)
-                throw new NullReferenceException(
-                    "productDescription should not be null since its parsed before 'ProductDescriptionProperties'");
-
-            var productProperty = new ProductDescriptionProperty
-            {
-                Value = value,
-                ProductDefinitionField = field
-            };
-
-            productDescription.ProductDescriptionProperties.Add(productProperty);
-        }
-
         private void AddProductVariants(Product product, ProductViewModel sfProduct)
         {
             if (sfProduct.VariationCount == 0) return;
 
             foreach (var sfVariant in sfProduct.ProductVariations)
-            {  
+            {
                 // Create the variant product
                 var variantProduct = new Product
                 { 
-                    Sku = product.Sku,   
-                    Name = sfVariant.DeltaPriceDisplay,  
+                    Sku = product.Sku,  
+                    Name = product.Name, //sfVariant.DeltaPriceDisplay,  
                     VariantSku = sfVariant.Sku,
                     ProductDefinition = product.ProductDefinition,
                     DisplayOnSite    = true,
@@ -266,12 +293,14 @@ namespace uCommerce.SfConnector.Transformers
                 var variantPrice = parentPrice + sfVariant.AdditionalPrice;
                 AddProductPrices(variantProduct, variantPrice);
 
+                AddProductDescriptionsForVariants(variantProduct, sfVariant);
                 product.AddVariant(variantProduct);
             }
         }
 
         private void AddVariantProperties(Product product, ProductVariation sfVariant, Product variantProduct)
         {
+            // Variant names and values live in comma separated lists in the Sitefinity models
             var variantFieldNames = sfVariant.VariantNames.Attribute.Split(',');
             var variantValues = sfVariant.VariantNames.AttributeValue.Split(',');
 
@@ -297,7 +326,7 @@ namespace uCommerce.SfConnector.Transformers
                     Value = variantValue,
                     Product = variantProduct
                 };
-
+                
                 variantProduct.AddProductProperty(productProperty);
             }
         }

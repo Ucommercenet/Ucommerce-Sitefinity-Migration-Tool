@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using MigrationCommon.Exceptions;
 using NHibernate;
-using NHibernate.Linq;
 using uCommerce.uConnector.Helpers;
 using UCommerce.EntitiesV2;
 using UConnector.Framework;

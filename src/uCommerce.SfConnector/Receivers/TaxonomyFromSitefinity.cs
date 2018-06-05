@@ -24,7 +24,7 @@ namespace uCommerce.SfConnector.Receivers
         /// <returns></returns>
         public IEnumerable<WcfHierarchicalTaxon> Receive()
         {
-            var categories = new List<WcfHierarchicalTaxon>();
+            List<WcfHierarchicalTaxon> categories;
             try
             {
                 using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))

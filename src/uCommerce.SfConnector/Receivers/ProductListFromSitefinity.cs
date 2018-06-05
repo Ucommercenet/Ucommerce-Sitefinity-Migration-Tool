@@ -7,7 +7,7 @@ using timw255.Sitefinity.RestClient.Model;
 using timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce.Catalog;
 using UConnector.Framework;
 
-namespace uCommerce.SfConnector.Adapters.Receivers
+namespace uCommerce.SfConnector.Receivers
 {
     /// <summary>
     /// Receiver for product data
@@ -17,7 +17,6 @@ namespace uCommerce.SfConnector.Adapters.Receivers
         public string SitefinityBaseUrl { private get; set; }
         public string SitefinityUsername { private get; set; }
         public string SitefinityPassword { private get; set; }
-        public string ConnectionString { private get; set; }
         public int Skip { private get; set; }
         public int Take { private get; set; }
         public log4net.ILog Log { private get; set; }
@@ -30,7 +29,7 @@ namespace uCommerce.SfConnector.Adapters.Receivers
         /// <returns>A list of sitefinity products</returns>
         public IEnumerable<ProductViewModel> Receive()
         {
-            var products = new List<ProductViewModel>();
+            List<ProductViewModel> products;
             try
             {
                 using (var sf = new SitefinityRestClient(SitefinityUsername, SitefinityPassword, SitefinityBaseUrl))
@@ -101,12 +100,34 @@ namespace uCommerce.SfConnector.Adapters.Receivers
 
         private void AddProductVariants(List<ProductViewModel> products, SitefinityRestClient sf)
         {
+            var culturesToMigrate = DataHelper.GetCulturesToMigrate(sf).ToList();
+            var defaultCulture = culturesToMigrate.First(x => x.IsDefault);
+
             var serviceWrapper = GetProductVariationServiceWrapper(sf);
 
             foreach (var product in products.Where(x => x.VariationCount > 0))
             {
-                var productVariants = serviceWrapper.GetProductVariationsOfParent(product.Id, "", "", 0, int.MaxValue, "");
+                var productVariants = serviceWrapper.GetProductVariationsOfParent(product.Id, "", "", 0, int.MaxValue, "", defaultCulture.Culture);
+                AddCultureSpecificVariants(culturesToMigrate, serviceWrapper, product, productVariants);
+
+                product.CultureCode = defaultCulture.Culture;
                 product.ProductVariations = productVariants.Items.ToList();
+            }
+        }
+
+        private static void AddCultureSpecificVariants(List<CultureViewModel> culturesToMigrate, ProductVariationServiceWrapper serviceWrapper,
+            ProductViewModel product, CollectionContext<ProductVariation> productVariants)
+        {
+            foreach (var culture in culturesToMigrate)
+            {
+                var cultureVariants = serviceWrapper.GetProductVariationsOfParent(product.Id, "", "", 0, int.MaxValue, "", culture.Culture);
+
+                foreach (var variant in productVariants.Items)
+                {
+                    var cultureVariant = cultureVariants.Items.FirstOrDefault(x => x.Id == variant.Id);
+                    if (cultureVariant == null) continue;
+                    variant.CultureTranslations.Add(culture.Culture, cultureVariant);
+                }
             }
         }
 
