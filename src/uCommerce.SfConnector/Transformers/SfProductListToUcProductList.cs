@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web.Script.Serialization;
 using MigrationCommon.Data;
 using MigrationCommon.Extensions;
+using MigrationCommon.Models;
 using NHibernate;
 using NHibernate.Linq;
 using timw255.Sitefinity.RestClient.Model;
@@ -78,8 +79,26 @@ namespace uCommerce.SfConnector.Transformers
             // Custom Properties
             AddProductProperties(product, sfProduct);
 
+            // Inventory
+            AddProductInventory(product, sfProduct.Item.InventoryJson);
+
             // Product Variants
             AddProductVariants(product, sfProduct);
+        }
+
+        private void AddProductInventory(Product product, string inventoryJson)
+        {
+            var productDefinitionField = _session.Query<ProductDefinitionField>().FirstOrDefault(x => x.Name == "InventoryOnHand"
+                                             && x.ProductDefinition.ProductDefinitionId == product.ProductDefinition.Id);
+            var inventoryModel = new JavaScriptSerializer().Deserialize<InventoryModel>(inventoryJson);
+
+            var productProperty = new ProductProperty()
+            {
+                ProductDefinitionField = productDefinitionField,
+                Value = inventoryModel.Inventory.ToString(),
+                Product = product
+            };
+            product.AddProductProperty(productProperty);
         }
 
         private void AddProductValueTypes(Product product, ProductViewModel sfProduct)
@@ -294,6 +313,7 @@ namespace uCommerce.SfConnector.Transformers
                 AddProductPrices(variantProduct, variantPrice);
 
                 AddProductDescriptionsForVariants(variantProduct, sfVariant);
+                AddProductInventory(variantProduct, sfVariant.InventoryJson);
                 product.AddVariant(variantProduct);
             }
         }

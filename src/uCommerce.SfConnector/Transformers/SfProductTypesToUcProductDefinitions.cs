@@ -35,7 +35,8 @@ namespace uCommerce.SfConnector.Transformers
                         Name = sfProductType.Title
                     });
 
-                    AddDefinitionFields(newDefinition, sfProductType);
+                    AddInventoryDefinitionField(newDefinition);
+                    AddCustomDefinitionFields(newDefinition, sfProductType);
                     productDefinitionList.Add(newDefinition);
                 }
             }
@@ -47,7 +48,25 @@ namespace uCommerce.SfConnector.Transformers
             return productDefinitionList;
         }
 
-        private void AddDefinitionFields(ProductDefinition definition, ProductTypeViewModel sfProductType)
+        public void AddInventoryDefinitionField(ProductDefinition definition)
+        {
+            var dataType = _session.Query<DataType>().FirstOrDefault(x => x.TypeName == "Number");
+            var definitionField = new ProductDefinitionField()
+            {
+                Multilingual = false,
+                DisplayOnSite = true,
+                Deleted = false,
+                RenderInEditor = true,
+                IsVariantProperty = true,
+                SortOrder = 0,
+                Name = "InventoryOnHand",
+                DataType = dataType
+            };
+
+            definition.AddProductDefinitionField(definitionField);
+        }
+
+        private void AddCustomDefinitionFields(ProductDefinition definition, ProductTypeViewModel sfProductType)
         {
             var dataType = _session.Query<DataType>().FirstOrDefault(x => x.TypeName == "ShortText");
             if (sfProductType.ProductAttributes == null)
@@ -72,7 +91,6 @@ namespace uCommerce.SfConnector.Transformers
                     DataType = dataType
                 };
 
-                //definitionField.ProductDefinitionFieldDescriptions= AddDefinitionFieldDescriptions(sfProductType, definitionField);
                 definition.AddProductDefinitionField(definitionField);
             }
         }
