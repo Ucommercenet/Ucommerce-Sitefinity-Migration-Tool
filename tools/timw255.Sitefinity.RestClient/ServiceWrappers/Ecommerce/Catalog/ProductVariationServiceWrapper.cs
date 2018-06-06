@@ -113,7 +113,7 @@ namespace timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce.Catalog
         }
 
         //[WebGet(UriTemplate = "/parent/{parentId}/?provider={provider}&sortExpression={sortExpression}&skip={skip}&take={take}&filter={filter}")]
-        public CollectionContext<ProductVariation> GetProductVariationsOfParent(Guid parentId, string provider, string sortExpression, int skip, int take, string filter)
+        public CollectionContext<ProductVariation> GetProductVariationsOfParent(Guid parentId, string provider, string sortExpression, int skip, int take, string filter, string culture = null)
         {
             var request = new RestRequest(this.ServiceUrl + "/parent/{parentId}/?provider={provider}&sortExpression={sortExpression}&skip={skip}&take={take}&filter={filter}", Method.GET);
 
@@ -123,6 +123,11 @@ namespace timw255.Sitefinity.RestClient.ServiceWrappers.Ecommerce.Catalog
             request.AddUrlSegment("skip", skip.ToString());
             request.AddUrlSegment("take", take.ToString());
             request.AddUrlSegment("filter", filter);
+
+            if (culture != null)
+            {
+                request.AddHeader("SF_UI_CULTURE", culture);
+            }
 
             return ExecuteRequest<CollectionContext<ProductVariation>>(request);
         }

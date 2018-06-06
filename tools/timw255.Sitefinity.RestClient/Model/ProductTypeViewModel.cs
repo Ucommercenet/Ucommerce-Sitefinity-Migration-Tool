@@ -18,7 +18,12 @@ namespace timw255.Sitefinity.RestClient.Model
         public string ProductDeliveryTypeTitle { get; set; }
         public string Title { get; set; }
         public List<ProductAttribute> ProductAttributes;
+        public string CultureCode { get; set; }
+        public Dictionary<string, ProductTypeViewModel> CultureTranslations { get; set; }
 
-        public ProductTypeViewModel() { }
+        public ProductTypeViewModel()
+        {
+            CultureTranslations = new Dictionary<string, ProductTypeViewModel>();
+        }
     }
 }

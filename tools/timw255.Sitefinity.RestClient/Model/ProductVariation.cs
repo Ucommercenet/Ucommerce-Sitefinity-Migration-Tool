@@ -22,7 +22,12 @@ namespace timw255.Sitefinity.RestClient.Model
         public ProductImage Thumbnail { get; set; }
         public string Variant { get; set; }
         public AttributeValueNamePair VariantNames { get; set; }
+        public string CultureCode { get; set; }
+        public Dictionary<string, ProductVariation> CultureTranslations { get; set; }
 
-        public ProductVariation() { }
+        public ProductVariation()
+        {
+            CultureTranslations = new Dictionary<string, ProductVariation>();
+        }
     }
 }
