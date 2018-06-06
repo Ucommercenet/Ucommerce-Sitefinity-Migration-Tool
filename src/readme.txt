@@ -16,7 +16,7 @@ Major Entities/Relationships Currently Supported (migrated):
 - Culture specific category names and descriptions
 - Culture specific product names and descriptions
 - Culture specific product variant values
-- Product availability/inventory
+- Product & variant inventory
 
 Planned Support:
 - Product images
